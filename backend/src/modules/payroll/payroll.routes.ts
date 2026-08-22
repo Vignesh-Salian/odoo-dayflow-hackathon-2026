@@ -13,12 +13,21 @@ import {
   generatePayslipsSchema,
   myPayslipsQuerySchema,
   payslipIdParamSchema,
+  putCompanySalaryPolicySchema,
   putSalaryStructureSchema,
 } from "./payroll.schema.js";
 
 export const payrollRouter = Router();
 
 payrollRouter.use(authMiddleware, requirePasswordChanged);
+
+payrollRouter.get("/company-policy", payrollController.getCompanySalaryPolicy);
+payrollRouter.put(
+  "/company-policy",
+  rbacMiddleware(Role.ADMIN),
+  validate(putCompanySalaryPolicySchema, "body"),
+  payrollController.putCompanySalaryPolicy,
+);
 
 payrollRouter.get(
   "/salary-structure/:employeeId",
@@ -48,3 +57,4 @@ payrollRouter.get(
   validate(payslipIdParamSchema, "params"),
   payrollController.downloadPdf,
 );
+

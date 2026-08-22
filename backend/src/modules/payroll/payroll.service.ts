@@ -164,6 +164,26 @@ async function buildPayslip(
 }
 
 export const payrollService = {
+  async getCompanySalaryPolicy(actor: AuthUser) {
+    let policy = await payrollRepository.findCompanySalaryPolicy(actor.companyId);
+    if (!policy) {
+      policy = await payrollRepository.upsertCompanySalaryPolicy(actor.companyId, {
+        pfEmployeeRate: 12,
+        pfEmployerRate: 12,
+        professionalTax: 200,
+        components: defaultComponentTemplate(),
+      });
+    }
+    return policy;
+  },
+
+  async putCompanySalaryPolicy(actor: AuthUser, input: PutCompanySalaryPolicyInput) {
+    if (actor.role !== Role.ADMIN) {
+      throw new AppError(403, "FORBIDDEN", "Only ADMIN can edit company salary policies");
+    }
+    return payrollRepository.upsertCompanySalaryPolicy(actor.companyId, input);
+  },
+
   async getSalaryStructure(actor: AuthUser, employeeId: string) {
     await assertEmployeeScope(actor, employeeId);
     const structure = await payrollRepository.findActiveStructure(employeeId);
@@ -180,7 +200,22 @@ export const payrollService = {
       throw new AppError(403, "FORBIDDEN", "Only ADMIN can edit salary structures");
     }
     const employee = await assertEmployeeScope(actor, employeeId);
-    const componentInputs = (input.components ?? defaultComponentTemplate()).map((component) => ({
+    let policyComponents = input.components;
+    let pfEmpRate = input.pfEmployeeRate;
+    let pfErRate = input.pfEmployerRate;
+    let ptAmt = input.professionalTax;
+
+    if (!policyComponents) {
+      const policy = await this.getCompanySalaryPolicy(actor);
+      policyComponents = policy.components.map((c) => ({
+        name: c.name,
+        computationType: c.computationType,
+        value: c.value ? Number(c.value) : null,
+        sequence: c.sequence,
+      }));
+    }
+
+    const componentInputs = policyComponents.map((component) => ({
       name: component.name.trim(),
       computationType: component.computationType,
       value: component.computationType === ComputationType.BALANCE ? null : (component.value ?? 0),
@@ -200,9 +235,9 @@ export const payrollService = {
           yearlyWage: round2(input.monthlyWage * 12),
           workingDaysPerWeek: input.workingDaysPerWeek,
           breakTimeHours: input.breakTimeHours ?? null,
-          pfEmployeeRate: input.pfEmployeeRate,
-          pfEmployerRate: input.pfEmployerRate,
-          professionalTax: input.professionalTax,
+          pfEmployeeRate: pfEmpRate,
+          pfEmployerRate: pfErRate,
+          professionalTax: ptAmt,
           effectiveFrom,
           isActive: true,
           components: {
@@ -219,6 +254,7 @@ export const payrollService = {
       );
     });
   },
+
 
   async generatePayslips(actor: AuthUser, input: GeneratePayslipsInput) {
     if (!isHrOrAdmin(actor.role)) {

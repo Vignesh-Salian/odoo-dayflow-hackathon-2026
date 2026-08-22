@@ -55,4 +55,22 @@ export const payrollController = {
       return next(error);
     }
   },
+
+  async getCompanySalaryPolicy(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await payrollService.getCompanySalaryPolicy(req.user!);
+      return success(res, data);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async putCompanySalaryPolicy(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await payrollService.putCompanySalaryPolicy(req.user!, req.body);
+      return success(res, data);
+    } catch (error) {
+      return next(error);
+    }
+  },
 };

@@ -99,6 +99,7 @@ model Company {
   leaveTypes          LeaveType[]
   publicHolidays      PublicHoliday[]
   employeeSerialCounters EmployeeSerialCounter[]
+  salaryPolicy           CompanySalaryPolicy?
 
   @@map("company")
 }
@@ -495,3 +496,32 @@ model Token {
   @@index([userId, type])
   @@map("tokens")
 }
+
+model CompanySalaryPolicy {
+  id                 String   @id @default(uuid()) @db.Uuid
+  companyId          String   @unique @map("company_id") @db.Uuid
+  pfEmployeeRate     Decimal  @default(12.00) @map("pf_employee_rate") @db.Decimal(5, 2)
+  pfEmployerRate     Decimal  @default(12.00) @map("pf_employer_rate") @db.Decimal(5, 2)
+  professionalTax    Decimal  @default(200) @map("professional_tax") @db.Decimal(10, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company    Company                        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  components CompanySalaryPolicyComponent[]
+
+  @@map("company_salary_policies")
+}
+
+model CompanySalaryPolicyComponent {
+  id                    String          @id @default(uuid()) @db.Uuid
+  companySalaryPolicyId String          @map("company_salary_policy_id") @db.Uuid
+  name                  String
+  computationType       ComputationType @map("computation_type")
+  value                 Decimal?        @db.Decimal(7, 3)
+  sequence              Int
+
+  policy CompanySalaryPolicy @relation(fields: [companySalaryPolicyId], references: [id], onDelete: Cascade)
+
+  @@map("company_salary_policy_components")
+}
+

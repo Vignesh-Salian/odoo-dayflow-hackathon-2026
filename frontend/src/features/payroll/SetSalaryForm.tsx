@@ -1,5 +1,5 @@
-/**
- * OWNER: Nidhish (Person B) — Admin sets wage; engine fills components (PDF Important rules).
+﻿/**
+ * OWNER: Nidhish (Person B) — Admin sets wage & structure parameters.
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,7 @@ function previewComponents(monthlyWage: number) {
     { name: "Standard Allowance", amount: standard, rule: "Fixed ₹4,167" },
     { name: "Performance Bonus", amount: perf, rule: "8.333% of basic" },
     { name: "Leave Travel Allowance", amount: lta, rule: "8.333% of basic" },
-    { name: "Fixed Allowance", amount: fixed, rule: "Balance (wage − others)" },
+    { name: "Fixed Allowance", amount: fixed, rule: "Balance (wage - others)" },
   ];
 }
 
@@ -48,8 +48,18 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const wageNum = Number(monthlyWage) || 0;
+  const pfEmpRate = Number(pfEmployee) || 0;
+  const pfErRate = Number(pfEmployer) || 0;
+  const ptAmt = Number(professionalTax) || 0;
+
   const preview = useMemo(() => (wageNum > 0 ? previewComponents(wageNum) : []), [wageNum]);
   const exceeds = preview.some((c) => c.name === "Fixed Allowance" && c.amount < 0);
+
+  const basicAmt = preview.find((c) => c.name === "Basic")?.amount ?? 0;
+  const pfEmpAmt = round2(basicAmt * (pfEmpRate / 100));
+  const pfErAmt = round2(basicAmt * (pfErRate / 100));
+  const totalDeductions = round2(pfEmpAmt + ptAmt);
+  const netSalary = round2(wageNum - totalDeductions);
 
   const saveMut = useMutation({
     mutationFn: () =>
@@ -57,34 +67,35 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
         monthlyWage: wageNum,
         workingDaysPerWeek: Number(workingDays) || 5,
         breakTimeHours: Number(breakHours) || 0,
-        pfEmployeeRate: Number(pfEmployee) || 12,
-        pfEmployerRate: Number(pfEmployer) || 12,
-        professionalTax: Number(professionalTax) || 0,
+        pfEmployeeRate: pfEmpRate,
+        pfEmployerRate: pfErRate,
+        professionalTax: ptAmt,
       }),
     onSuccess: async () => {
       setError(null);
       await qc.invalidateQueries({ queryKey: ["salary", employeeId] });
+      await qc.invalidateQueries({ queryKey: ["salary-me"] });
     },
     onError: (err) => setError(getApiError(err).message),
   });
 
   return (
     <div className="mt-4 space-y-4 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] p-4">
-      <p className="text-sm text-[var(--color-muted)]">
+      <p className="text-sm text-[var(--color-muted)] font-medium">
         {mode === "replace"
-          ? "Update the monthly wage and schedule — components recalculate automatically so they still sum to the wage."
-          : "Set a fixed monthly wage. Dayflow builds Basic / HRA / allowances (Fixed Allowance = remainder) so components always equal the wage."}
+          ? "Update monthly wage and parameters — components & net salary recalculate automatically."
+          : "Set fixed monthly wage. Dayflow builds Basic, HRA, and Allowances automatically."}
       </p>
-      {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
+      {error ? <p className="text-sm text-[var(--color-danger)] font-medium">{error}</p> : null}
       {exceeds ? (
-        <p className="text-sm text-[var(--color-danger)]">
-          Non-balance components exceed this wage — raise the wage or components will fail to save.
+        <p className="text-sm text-[var(--color-danger)] font-medium">
+          Non-balance components exceed this wage — raise the wage to proceed.
         </p>
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <FormField
-          label="Month wage (INR)"
+          label="Monthly wage (INR)"
           name="monthlyWage"
           type="number"
           min={1}
@@ -110,7 +121,7 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
           onChange={(e) => setBreakHours(e.target.value)}
         />
         <FormField
-          label="PF employee %"
+          label="Employee PF (%)"
           name="pfEmployee"
           type="number"
           min={0}
@@ -118,7 +129,7 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
           onChange={(e) => setPfEmployee(e.target.value)}
         />
         <FormField
-          label="PF employer %"
+          label="Employer PF (%)"
           name="pfEmployer"
           type="number"
           min={0}
@@ -126,7 +137,7 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
           onChange={(e) => setPfEmployer(e.target.value)}
         />
         <FormField
-          label="Professional tax"
+          label="Professional Tax (INR)"
           name="professionalTax"
           type="number"
           min={0}
@@ -135,42 +146,69 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
         />
       </div>
 
+      {/* Real-time Salary Breakdown Preview */}
       {preview.length > 0 ? (
-        <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
-              <tr>
-                <th className="px-3 py-2 font-medium">Component</th>
-                <th className="px-3 py-2 font-medium">Rule</th>
-                <th className="px-3 py-2 font-medium text-right">Preview</th>
-              </tr>
-            </thead>
-            <tbody>
-              {preview.map((c) => (
-                <tr key={c.name} className="border-t border-[var(--color-border)]">
-                  <td className="px-3 py-1.5">{c.name}</td>
-                  <td className="px-3 py-1.5 text-[var(--color-muted)]">{c.rule}</td>
-                  <td
-                    className={`px-3 py-1.5 text-right tabular-nums ${
-                      c.amount < 0 ? "text-[var(--color-danger)]" : ""
-                    }`}
-                  >
-                    {formatMoney(c.amount)}
+        <div className="space-y-3">
+          <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Component</th>
+                  <th className="px-3 py-2 font-medium">Rule</th>
+                  <th className="px-3 py-2 font-medium text-right">Monthly Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.map((c) => (
+                  <tr key={c.name} className="border-t border-[var(--color-border)]">
+                    <td className="px-3 py-1.5 font-medium">{c.name}</td>
+                    <td className="px-3 py-1.5 text-[var(--color-muted)]">{c.rule}</td>
+                    <td
+                      className={`px-3 py-1.5 text-right tabular-nums ${
+                        c.amount < 0 ? "text-[var(--color-danger)] font-bold" : ""
+                      }`}
+                    >
+                      {formatMoney(c.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-[var(--color-border)] bg-[var(--color-surface)] font-semibold">
+                  <td className="px-3 py-2" colSpan={2}>
+                    Gross Monthly Wage
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {formatMoney(wageNum)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-[var(--color-border)]">
-                <td className="px-3 py-2 font-semibold" colSpan={2}>
-                  Yearly wage
-                </td>
-                <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                  {formatMoney(wageNum * 12)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                <tr className="border-t border-[var(--color-border)] text-xs text-rose-600">
+                  <td className="px-3 py-1.5" colSpan={2}>
+                    Employee Deductions (PF {pfEmpRate}% + PT {formatMoney(ptAmt)})
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums font-semibold">
+                    -{formatMoney(totalDeductions)}
+                  </td>
+                </tr>
+                <tr className="border-t border-[var(--color-border)] text-xs text-[var(--color-accent)]">
+                  <td className="px-3 py-1.5" colSpan={2}>
+                    Employer Contribution (PF {pfErRate}% - Company Paid)
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums font-semibold">
+                    {formatMoney(pfErAmt)}
+                  </td>
+                </tr>
+                <tr className="border-t-2 border-[var(--color-border)] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold">
+                  <td className="px-3 py-2 text-base" colSpan={2}>
+                    Estimated Net Take-Home Salary
+                  </td>
+                  <td className="px-3 py-2 text-right text-base tabular-nums">
+                    {formatMoney(netSalary)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       ) : null}
 
@@ -178,9 +216,9 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
         type="button"
         disabled={saveMut.isPending || !monthlyWage || exceeds || wageNum <= 0}
         onClick={() => saveMut.mutate()}
-        className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
       >
-        {saveMut.isPending ? "Saving…" : mode === "replace" ? "Replace structure" : "Save salary structure"}
+        {saveMut.isPending ? "Saving Salary Structure…" : mode === "replace" ? "Update Salary Structure" : "Save Salary Structure"}
       </button>
     </div>
   );

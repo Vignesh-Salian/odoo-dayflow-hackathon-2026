@@ -155,4 +155,72 @@ export const payrollRepository = {
       },
     });
   },
+
+  findCompanySalaryPolicy(companyId: string) {
+    return prisma.companySalaryPolicy.findUnique({
+      where: { companyId },
+      include: {
+        components: { orderBy: { sequence: "asc" } },
+      },
+    });
+  },
+
+  async upsertCompanySalaryPolicy(
+    companyId: string,
+    input: {
+      pfEmployeeRate: number;
+      pfEmployerRate: number;
+      professionalTax: number;
+      components: { name: string; computationType: any; value: number | null; sequence: number }[];
+    },
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.companySalaryPolicy.findUnique({ where: { companyId } });
+      if (existing) {
+        await tx.companySalaryPolicyComponent.deleteMany({
+          where: { companySalaryPolicyId: existing.id },
+        });
+        return tx.companySalaryPolicy.update({
+          where: { companyId },
+          data: {
+            pfEmployeeRate: input.pfEmployeeRate,
+            pfEmployerRate: input.pfEmployerRate,
+            professionalTax: input.professionalTax,
+            components: {
+              create: input.components.map((c) => ({
+                name: c.name,
+                computationType: c.computationType,
+                value: c.value,
+                sequence: c.sequence,
+              })),
+            },
+          },
+          include: {
+            components: { orderBy: { sequence: "asc" } },
+          },
+        });
+      }
+
+      return tx.companySalaryPolicy.create({
+        data: {
+          companyId,
+          pfEmployeeRate: input.pfEmployeeRate,
+          pfEmployerRate: input.pfEmployerRate,
+          professionalTax: input.professionalTax,
+          components: {
+            create: input.components.map((c) => ({
+              name: c.name,
+              computationType: c.computationType,
+              value: c.value,
+              sequence: c.sequence,
+            })),
+          },
+        },
+        include: {
+          components: { orderBy: { sequence: "asc" } },
+        },
+      });
+    });
+  },
 };
+

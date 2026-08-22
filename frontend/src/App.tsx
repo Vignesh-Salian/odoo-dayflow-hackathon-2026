@@ -16,7 +16,9 @@ import { AnalyticsPage } from "./features/analytics/AnalyticsPage.tsx";
 import { TimeOffPage } from "./features/timeoff/TimeOffPage.tsx";
 import { TimeOffManagePage } from "./features/timeoff/TimeOffManagePage.tsx";
 import { CompanySettingsPage } from "./features/auth/CompanySettingsPage.tsx";
+import { CompanySalaryPolicyPage } from "./features/payroll/CompanySalaryPolicyPage.tsx";
 import { AuditLogsPage } from "./features/audit/AuditLogsPage.tsx";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +54,7 @@ export default function App() {
                 <Route path="/timeoff" element={<TimeOffPage />} />
                 <Route path="/timeoff/manage" element={<TimeOffManagePage />} />
                 <Route path="/payroll" element={<PayrollPage />} />
+                <Route path="/salary-policy" element={<CompanySalaryPolicyPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/settings" element={<CompanySettingsPage />} />
                 <Route path="/audit" element={<AuditLogsPage />} />

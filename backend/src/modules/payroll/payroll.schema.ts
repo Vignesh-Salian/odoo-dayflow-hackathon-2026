@@ -42,6 +42,15 @@ export const myPayslipsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const putCompanySalaryPolicySchema = z.object({
+  pfEmployeeRate: z.number().min(0).max(100).default(12),
+  pfEmployerRate: z.number().min(0).max(100).default(12),
+  professionalTax: z.number().min(0).default(200),
+  components: z.array(componentSchema).min(1, "At least one component required"),
+});
+
 export type PutSalaryStructureInput = z.infer<typeof putSalaryStructureSchema>;
 export type GeneratePayslipsInput = z.infer<typeof generatePayslipsSchema>;
 export type MyPayslipsQuery = z.infer<typeof myPayslipsQuerySchema>;
+export type PutCompanySalaryPolicyInput = z.infer<typeof putCompanySalaryPolicySchema>;
+

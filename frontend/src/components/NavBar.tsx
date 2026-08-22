@@ -97,6 +97,11 @@ export function NavBar() {
               <NavLink to="/payroll" className={linkClass}>
                 Payroll
               </NavLink>
+              {user?.role === "ADMIN" ? (
+                <NavLink to="/salary-policy" className={linkClass}>
+                  Salary Policy
+                </NavLink>
+              ) : null}
               {isManager ? (
                 <NavLink to="/analytics" className={linkClass}>
                   Analytics

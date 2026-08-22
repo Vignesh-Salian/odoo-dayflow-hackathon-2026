@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OWNER: Nidhish (Person B) — salary structure panel matching PDF Salary Info layout.
  */
 import { formatMoney } from "../../utils/format.ts";
@@ -36,17 +36,21 @@ const COMPONENT_BLURBS: Record<string, string> = {
   "standard allowance":
     "A standard allowance is a predetermined, fixed amount provided to employee as part of their salary.",
   "performance bonus":
-    "Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary.",
+    "Variable amount paid during payroll. Calculated as a % of the basic salary.",
   "leave travel allowance":
-    "LTA is paid by the company to employees to cover their travel expenses, and calculated as a % of the basic salary.",
-  lta: "LTA is paid by the company to employees to cover their travel expenses, and calculated as a % of the basic salary.",
+    "LTA is paid by the company to employees to cover travel expenses, calculated as a % of the basic salary.",
+  lta: "LTA is paid by the company to employees to cover travel expenses, calculated as a % of the basic salary.",
   "fixed allowance":
-    "Fixed allowance portion of wages is determined after calculating all salary components (wage − other components).",
+    "Fixed allowance portion of wages is determined after calculating all salary components (wage - others).",
 };
 
 function num(v: string | number | null | undefined): number {
   if (v == null || v === "") return 0;
   return Number(v);
+}
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
 function percentBadge(type: string, value: string | number | null, monthlyWage: number, amount: number) {
@@ -66,7 +70,7 @@ function percentBadge(type: string, value: string | number | null, monthlyWage: 
 
 function blurbFor(name: string): string {
   const key = name.toLowerCase().trim();
-  return COMPONENT_BLURBS[key] ?? "Salary component derived from the monthly wage rules.";
+  return COMPONENT_BLURBS[key] ?? "Salary component derived from monthly wage rules.";
 }
 
 type Props = {
@@ -76,7 +80,7 @@ type Props = {
 };
 
 export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props) {
-  if (isLoading) return <LoadingState label="Loading salary…" />;
+  if (isLoading) return <LoadingState label="Loading salary structure…" />;
   if (!data) {
     return (
       <EmptyState
@@ -89,14 +93,15 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
   const monthlyWage = num(data.monthlyWage);
   const yearlyWage = num(data.yearlyWage) || monthlyWage * 12;
   const components = [...(data.components ?? [])].sort((a, b) => a.sequence - b.sequence);
-  const basic =
-    components.find((c) => c.name.toLowerCase() === "basic")?.computedAmount ?? 0;
+  const basic = components.find((c) => c.name.toLowerCase() === "basic")?.computedAmount ?? 0;
   const basicAmt = num(basic);
   const pfEmpRate = num(data.pfEmployeeRate);
   const pfErRate = num(data.pfEmployerRate);
-  const pfEmployeeAmt = Math.round(basicAmt * (pfEmpRate / 100) * 100) / 100;
-  const pfEmployerAmt = Math.round(basicAmt * (pfErRate / 100) * 100) / 100;
+  const pfEmployeeAmt = round2(basicAmt * (pfEmpRate / 100));
+  const pfEmployerAmt = round2(basicAmt * (pfErRate / 100));
   const pt = num(data.professionalTax);
+  const totalDeductions = round2(pfEmployeeAmt + pt);
+  const netSalary = round2(monthlyWage - totalDeductions);
 
   return (
     <div className="space-y-6">
@@ -110,40 +115,64 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
         </p>
       )}
 
-      {/* Top: general wage info (PDF) */}
+      {/* Top: Overview Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <p className="text-xs text-[var(--color-muted)]">Month Wage</p>
-          <p className="text-xl font-semibold tabular-nums">
-            {formatMoney(monthlyWage)} <span className="text-sm font-normal text-[var(--color-muted)]">/ Month</span>
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+          <p className="text-xs font-medium text-[var(--color-muted)]">Monthly Wage</p>
+          <p className="text-xl font-bold tabular-nums mt-0.5">
+            {formatMoney(monthlyWage)} <span className="text-xs font-normal text-[var(--color-muted)]">/ Month</span>
           </p>
         </div>
-        <div>
-          <p className="text-xs text-[var(--color-muted)]">Yearly wage</p>
-          <p className="text-xl font-semibold tabular-nums">
-            {formatMoney(yearlyWage)}{" "}
-            <span className="text-sm font-normal text-[var(--color-muted)]">/ Yearly</span>
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+          <p className="text-xs font-medium text-[var(--color-muted)]">Yearly Wage</p>
+          <p className="text-xl font-bold tabular-nums mt-0.5">
+            {formatMoney(yearlyWage)} <span className="text-xs font-normal text-[var(--color-muted)]">/ Year</span>
           </p>
         </div>
-        <div>
-          <p className="text-xs text-[var(--color-muted)]">No. of working days in a week</p>
-          <p className="text-xl font-semibold tabular-nums">{data.workingDaysPerWeek}</p>
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+          <p className="text-xs font-medium text-[var(--color-muted)]">Working Days / Week</p>
+          <p className="text-xl font-bold tabular-nums mt-0.5">{data.workingDaysPerWeek} Days</p>
         </div>
-        <div>
-          <p className="text-xs text-[var(--color-muted)]">Break Time</p>
-          <p className="text-xl font-semibold tabular-nums">
-            {data.breakTimeHours != null && data.breakTimeHours !== ""
-              ? String(data.breakTimeHours)
-              : "—"}{" "}
-            <span className="text-sm font-normal text-[var(--color-muted)]">/ hrs</span>
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+          <p className="text-xs font-medium text-[var(--color-muted)]">Break Time</p>
+          <p className="text-xl font-bold tabular-nums mt-0.5">
+            {data.breakTimeHours != null && data.breakTimeHours !== "" ? String(data.breakTimeHours) : "—"}{" "}
+            <span className="text-xs font-normal text-[var(--color-muted)]">/ hrs</span>
           </p>
         </div>
       </div>
 
-      {/* Two columns: components | PF + tax */}
+      {/* Salary Summary Card */}
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--color-tab)]">Salary Summary Breakdown</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
+            <p className="text-xs text-[var(--color-muted)] font-medium">Gross Earnings</p>
+            <p className="text-lg font-bold tabular-nums">{formatMoney(monthlyWage)}</p>
+            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">Basic + Allowances</p>
+          </div>
+          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
+            <p className="text-xs text-[var(--color-muted)] font-medium">Employee Deductions</p>
+            <p className="text-lg font-bold tabular-nums text-rose-600">-{formatMoney(totalDeductions)}</p>
+            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">PF ({pfEmpRate}%) + PT ({formatMoney(pt)})</p>
+          </div>
+          <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 p-3 border border-emerald-200 dark:border-emerald-800">
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Net Take-Home Salary</p>
+            <p className="text-xl font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">{formatMoney(netSalary)}</p>
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Gross - Employee Deductions</p>
+          </div>
+          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
+            <p className="text-xs text-[var(--color-muted)] font-medium">Employer Contributions</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--color-accent)]">{formatMoney(pfEmployerAmt)}</p>
+            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">Employer PF ({pfErRate}%)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Two columns: Earnings Components | PF + Tax Deductions */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--color-tab)]">Salary components</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-tab)]">Earnings Components</h3>
           {components.map((c) => {
             const amount = num(c.computedAmount);
             return (
@@ -165,12 +194,10 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
               </div>
             );
           })}
-          <p className="border-t border-[var(--color-border)] pt-2 text-sm font-semibold tabular-nums">
-            Total components: {formatMoney(monthlyWage)}
-            <span className="ml-2 text-xs font-normal text-[var(--color-muted)]">
-              (must equal month wage)
-            </span>
-          </p>
+          <div className="flex justify-between items-center border-t border-[var(--color-border)] pt-2 text-sm font-semibold">
+            <span>Total Gross Components:</span>
+            <span className="tabular-nums">{formatMoney(monthlyWage)}</span>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -180,21 +207,21 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
             </h3>
             <div className="space-y-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
               <div className="flex justify-between gap-2 text-sm">
-                <span>Employee</span>
+                <span className="font-medium">Employee PF ({pfEmpRate}%)</span>
                 <span className="tabular-nums">
-                  <strong>{formatMoney(pfEmployeeAmt)}</strong>
-                  <span className="text-[var(--color-muted)]"> / month · {pfEmpRate.toFixed(2)}%</span>
+                  <strong className="text-rose-600">-{formatMoney(pfEmployeeAmt)}</strong>
+                  <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
-              <div className="flex justify-between gap-2 text-sm">
-                <span>Employer</span>
+              <div className="flex justify-between gap-2 text-sm pt-1 border-t border-[var(--color-border)]">
+                <span className="font-medium">Employer PF ({pfErRate}%)</span>
                 <span className="tabular-nums">
-                  <strong>{formatMoney(pfEmployerAmt)}</strong>
-                  <span className="text-[var(--color-muted)]"> / month · {pfErRate.toFixed(2)}%</span>
+                  <strong className="text-[var(--color-accent)]">{formatMoney(pfEmployerAmt)}</strong>
+                  <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
-              <p className="text-xs text-[var(--color-muted)]">
-                PF is calculated based on the basic salary.
+              <p className="text-xs text-[var(--color-muted)] mt-1">
+                PF is calculated based on Basic salary ({formatMoney(basicAmt)}). Employer PF is an additional company contribution and does NOT reduce employee net salary.
               </p>
             </div>
           </div>
@@ -203,14 +230,14 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
             <h3 className="mb-3 text-sm font-semibold text-[var(--color-tab)]">Tax Deductions</h3>
             <div className="space-y-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
               <div className="flex justify-between gap-2 text-sm">
-                <span>Professional Tax</span>
+                <span className="font-medium">Professional Tax (PT)</span>
                 <span className="tabular-nums">
-                  <strong>{formatMoney(pt)}</strong>
+                  <strong className="text-rose-600">-{formatMoney(pt)}</strong>
                   <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
               <p className="text-xs text-[var(--color-muted)]">
-                Professional Tax deducted from the Gross salary.
+                Professional Tax deducted directly from Gross Salary.
               </p>
             </div>
           </div>

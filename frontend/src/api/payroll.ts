@@ -4,6 +4,12 @@
 import { api } from "./client.ts";
 
 export const payrollApi = {
+  getCompanySalaryPolicy() {
+    return api.get("/payroll/company-policy");
+  },
+  putCompanySalaryPolicy(body: Record<string, unknown>) {
+    return api.put("/payroll/company-policy", body);
+  },
   getSalaryStructure(employeeId: string) {
     return api.get(`/payroll/salary-structure/${employeeId}`);
   },
@@ -20,3 +26,4 @@ export const payrollApi = {
     return `/api/v1/payroll/payslips/${id}/pdf`;
   },
 };
+
