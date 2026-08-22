@@ -1,7 +1,6 @@
 /**
- * OWNER: Vignesh (Person C) — Phase 8
- * PLACEHOLDER on `main`. Copy from reference:
- *   git show reference/copy-from-here:backend/src/modules/analytics/analytics.repository.ts > backend/src/modules/analytics/analytics.repository.ts
+ * OWNER: Vignesh (Person C)
+ * Prisma aggregates for the analytics dashboard.
  */
 import { prisma } from "../../common/db/prisma.js";
 
@@ -25,32 +24,42 @@ export const analyticsRepository = {
 
   countPendingLeaveRequests(companyId: string) {
     return prisma.leaveRequest.count({
-      where: { status: "PENDING", employee: { user: { companyId } } },
+      where: {
+        status: "PENDING",
+        employee: { user: { companyId } },
+      },
     });
   },
 
   countPendingRegularizations(companyId: string) {
     return prisma.attendanceRegularization.count({
-      where: { status: "PENDING", employee: { user: { companyId } } },
+      where: {
+        status: "PENDING",
+        employee: { user: { companyId } },
+      },
     });
   },
 
-  /** TODO: replace with aggregate() from reference/copy-from-here */
+  /** Stub payroll cost: sum of active monthly wages for company employees. */
   async sumActiveMonthlyWages(companyId: string) {
-    const rows = await prisma.salaryStructure.findMany({
+    const agg = await prisma.salaryStructure.aggregate({
       where: {
         isActive: true,
         employee: { user: { companyId, isActive: true } },
       },
-      select: { monthlyWage: true },
+      _sum: { monthlyWage: true },
     });
-    return rows.reduce((sum, r) => sum + Number(r.monthlyWage), 0);
+    return Number(agg._sum.monthlyWage ?? 0);
   },
 
   headcountByDepartment(companyId: string) {
     return prisma.department.findMany({
       where: { companyId },
-      select: { id: true, name: true, _count: { select: { employees: true } } },
+      select: {
+        id: true,
+        name: true,
+        _count: { select: { employees: true } },
+      },
       orderBy: { name: "asc" },
     });
   },
