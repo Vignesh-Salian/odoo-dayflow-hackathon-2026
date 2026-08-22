@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authApi, type AuthUser } from "../../api/auth.ts";
 
 type AuthContextValue = {
@@ -21,6 +22,7 @@ type AuthContextValue = {
     adminLastName: string;
     email: string;
     password: string;
+    phone?: string;
     logo?: File | null;
   }) => Promise<AuthUser>;
   logout: () => void;
@@ -41,18 +43,30 @@ function clearTokens() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const setSession = useCallback((accessToken: string, refreshToken: string, next: AuthUser) => {
-    persistTokens(accessToken, refreshToken);
-    setUser(next);
-  }, []);
+  /** Drop all cached API data so company A never flashes after login as company B. */
+  const wipeClientCache = useCallback(() => {
+    void queryClient.cancelQueries();
+    queryClient.clear();
+  }, [queryClient]);
+
+  const setSession = useCallback(
+    (accessToken: string, refreshToken: string, next: AuthUser) => {
+      persistTokens(accessToken, refreshToken);
+      wipeClientCache();
+      setUser(next);
+    },
+    [wipeClientCache],
+  );
 
   const logout = useCallback(() => {
     clearTokens();
+    wipeClientCache();
     setUser(null);
-  }, []);
+  }, [wipeClientCache]);
 
   const refreshMe = useCallback(async () => {
     const token = localStorage.getItem("dayflow_access_token");
@@ -104,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       adminLastName: string;
       email: string;
       password: string;
+      phone?: string;
       logo?: File | null;
     }) => {
       const { data } = await authApi.companySignup(payload);

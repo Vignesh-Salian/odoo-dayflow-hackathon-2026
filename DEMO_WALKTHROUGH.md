@@ -13,7 +13,7 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-> **Note:** There is still **no “Add employee” button in the UI**. Creating staff is done via API (steps below). Watch the **backend terminal** for the printed `loginId` + temp password.
+> **Greenfield tip:** After signup, use **Employees → + New** in the UI. Copy the one-time login ID + temp password from the modal, then open **Salary Info** on the profile to set wage.
 
 ---
 
@@ -38,94 +38,74 @@ cd frontend && npm run dev
 | Field | Value to enter |
 |-------|----------------|
 | Company name | `Acme Robotics` |
-| Company logo | Optional — any PNG/JPG |
+| Upload logo | Optional — any PNG/JPG |
 | Country | `India` |
 | First name | `Riya` |
 | Last name | `Kapoor` |
-| Admin email | `riya.admin@acme-robotics.test` |
+| Email | `riya.admin@acme-robotics.test` |
+| Phone | `+91-98000-11111` (optional) |
 | Password | `Admin@2026` (must have upper + lower + digit, ≥8 chars) |
+| Confirm password | `Admin@2026` |
 
 | **Expected** |
 |--------------|
 | Account created. You land on **`/employees`** (Admin home). |
-| Navbar shows **Acme Robotics** (+ logo if uploaded). |
-| Backend created default leave types: PTO, Sick, Unpaid (and Casual if seeded in signup). |
-| Your admin login ID was auto-generated (looks like `ACRIKA2026xxxx`) — save it from profile/API if you need to re-login. Email also works: `riya.admin@acme-robotics.test`. |
+| Navbar shows **Acme Robotics** (+ logo if uploaded). Avatar has a **red** presence dot until you Check In. |
+| Backend created default leave types: PTO, Sick, Unpaid. |
+| Your admin login ID was auto-generated (looks like `ACRIKA2026xxxx`) — save it from **My Profile**. Email also works: `riya.admin@acme-robotics.test`. |
 
 **Weak-password check (optional):** try password `abc` first → expect field error, then use `Admin@2026`.
 
 ---
 
-## Phase 2 — Create an employee (API — no UI yet)
+## Phase 2 — Create an employee (UI)
 
-Stay logged in as Admin in the browser. Open DevTools → Application → Local Storage → copy `dayflow_access_token`.
+Stay logged in as the new company Admin.
 
-### 2.1 Create employee via API
+### 2.1 Add employee
 
-In PowerShell (replace `YOUR_TOKEN`):
-
-```powershell
-$token = "YOUR_TOKEN"
-
-$body = @{
-  email         = "amit.employee@acme-robotics.test"
-  firstName     = "Amit"
-  lastName      = "Sharma"
-  dateOfJoining = "2026-01-15"
-  role          = "EMPLOYEE"
-  phone         = "+91-98765-43210"
-  jobPosition   = "Software Engineer"
-  workLocation  = "Bengaluru"
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/v1/employees" `
-  -Method POST `
-  -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
-  -Body $body
-```
-
-| **Expected** |
-|--------------|
-| JSON with new employee `id` and user `loginId`. |
-| **Backend console** prints something like: |
-| `[employee-created] loginId=ACAMSH2026xxxx email=amit.employee@acme-robotics.test tempPassword=........` |
-| **Copy `loginId` + `tempPassword`** — employee needs them next. |
-| Default leave allocations are created for the employee. |
-
-Save from the response:
-- `employeeId` (UUID)
-- `loginId`
-
-### 2.2 Set salary structure (Admin only)
-
-```powershell
-$employeeId = "PASTE_EMPLOYEE_UUID"
-
-$salary = @{
-  monthlyWage       = 60000
-  workingDaysPerWeek = 5
-  pfEmployeeRate    = 12
-  pfEmployerRate    = 12
-  professionalTax   = 200
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/v1/payroll/salary-structure/$employeeId" `
-  -Method PUT `
-  -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
-  -Body $salary
-```
-
-| **Expected** |
-|--------------|
-| Returns structure with components (Basic 50%, HRA, allowances, Fixed Allowance BALANCE) summing to ₹60,000. |
-
-### 2.3 Refresh Employees page
 | | |
 |--|--|
 | **Page** | `/employees` |
-| **Expected** | Amit Sharma card appears (search `Amit` if needed). Click card → profile shows job + **salary table** (not JSON). |
+| **Action** | Click **+ New** |
+
+| Field | Value |
+|-------|--------|
+| First name | `Amit` |
+| Last name | `Sharma` |
+| Work email | `amit.employee@acme-robotics.test` |
+| Date of joining | `2026-01-15` |
+| Role | Employee |
+| Job position | `Software Engineer` |
+| Phone | `+91-98765-43210` |
+| Work location | `Bengaluru` |
+
+Click **Create employee**.
+
+| **Expected** |
+|--------------|
+| Modal switches to **“Employee created — save credentials”**. |
+| Shows **Login ID** (e.g. `ACAMSH2026xxxx`) + **Temp password**. |
+| Use **Copy login details** — employee needs these next (also printed in backend console). |
+| Default leave allocations are created for the employee. |
+| Directory card shows avatar initials + presence dot (yellow absent until check-in). |
+
+### 2.2 Set salary structure
+
+| | |
+|--|--|
+| **Action** | In the same modal, click **Open profile & set salary** (or open Amit’s card). |
+| **Page** | `/employees/:id` → tab **Salary Info** |
+
+Enter monthly wage `60000` → **Save salary structure**.
+
+| **Expected** |
+|--------------|
+| Profile tabs: **Resume | Private Info | Salary Info**. |
+| Salary Info shows Basic / HRA / allowances summing to ₹60,000 (+ break time if set). |
+| Directory card for Amit Sharma is visible (search `Amit` if needed). |
+
+Use the bottom **Check In → / Entry / Check Out →** widget on Employees to mark yourself present — avatar dot turns **green**.
 
 ---
 
@@ -135,7 +115,7 @@ Invoke-RestMethod `
 | | |
 |--|--|
 | **Page** | `/login` |
-| **Input** | Login ID = printed `ACAMSH…` · Password = **temp password from backend log** |
+| **Input** | Login ID from the create modal · Password = **temp password from the modal** |
 
 | **Expected** |
 |--------------|
@@ -144,7 +124,7 @@ Invoke-RestMethod `
 ### 3.2 Change password
 | Field | Value |
 |-------|--------|
-| Current password | *(temp from backend)* |
+| Current password | *(temp from create modal)* |
 | New password | `Emp@2026` |
 
 | **Expected** |
@@ -154,7 +134,7 @@ Invoke-RestMethod `
 
 ### 3.3 My Profile
 | **Page** | `/me` |
-| **Expected** | Name, phone, location. Salary section read-only with INR breakdown. |
+| **Expected** | Tabs **Resume | Private Info | Salary Info | Security**. Header shows company / dept / manager / location. Salary Info read-only. Security can change password later. |
 
 ---
 
@@ -260,20 +240,18 @@ Invoke-RestMethod `
 
 ## Phase 8 — Optional: create HR user
 
-As Admin, API create with `"role": "HR"`:
+As Admin on `/employees` → **+ New**, set Role = **HR**:
 
-```json
-{
-  "email": "hr.lead@acme-robotics.test",
-  "firstName": "Sana",
-  "lastName": "Iyer",
-  "dateOfJoining": "2026-02-01",
-  "role": "HR",
-  "jobPosition": "HR Lead"
-}
-```
+| Field | Value |
+|-------|--------|
+| First name | `Sana` |
+| Last name | `Iyer` |
+| Work email | `hr.lead@acme-robotics.test` |
+| Date of joining | `2026-02-01` |
+| Role | HR |
+| Job position | `HR Lead` |
 
-Then login with printed temp password → change password → HR can use Approvals / Analytics but **not** Company logo / Audit.
+Copy credentials from the modal → login → change password → HR can use Approvals / Analytics but **not** Company logo / Audit.
 
 ---
 
@@ -282,7 +260,7 @@ Then login with printed temp password → change password → HR can use Approva
 | Role | How to sign in | Password after setup |
 |------|----------------|----------------------|
 | Admin | `riya.admin@acme-robotics.test` (or generated login ID) | `Admin@2026` |
-| Employee | Login ID from backend log | `Emp@2026` (after forced change) |
+| Employee | Login ID from create-employee modal | `Emp@2026` (after forced change) |
 
 ---
 
@@ -291,21 +269,21 @@ Then login with printed temp password → change password → HR can use Approva
 | Issue | Fix |
 |-------|-----|
 | Signup email already used | Pick a new email (`riya2@…`) or wipe that company in DB |
-| No temp password | Look at **backend** terminal right after POST `/employees` |
-| Employee not forced to change password | Confirm create response had `mustChangePassword: true` |
-| No salary on profile | Re-run PUT salary-structure (step 2.2) |
-| Empty Employees list | Hard refresh; confirm token is Admin’s |
+| No temp password | Copy from the create-employee modal (also logged in backend console) |
+| Employee not forced to change password | Confirm they used the **temp** password from the modal |
+| No salary on profile | Open employee → **Salary Info** as Admin → set monthly wage (step 2.2) |
+| Empty Employees list | Hard refresh; confirm you are logged in as that company’s Admin |
 | PDF missing logo | Upload logo on `/settings`, regenerate/download PDF again |
-| Generate payslip fails “no structure” | Salary PUT must succeed first |
+| Generate payslip fails “no structure” | Save salary structure under **Salary Info** first |
 
 ---
 
 ## Fast path (10 min for judges)
 
-1. **Signup** Acme + logo  
-2. **API create** Amit + salary  
-3. **Employee** login → password change → check-in  
-4. **Leave** apply → Admin approve  
+1. **Signup** Acme + logo (+ phone / confirm password)  
+2. **+ New** Amit → copy creds → **Salary Info** set wage  
+3. **Employee** login → password change → check-in (avatar turns green)  
+4. **Leave** NEW request (see day count) → Admin **Time Off** approve  
 5. **Generate payslip** → download PDF with logo  
 6. **Analytics** + **Audit** flash  
 

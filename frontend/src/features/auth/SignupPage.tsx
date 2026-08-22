@@ -14,7 +14,9 @@ export function SignupPage() {
     adminFirstName: "",
     adminLastName: "",
     email: "",
+    phone: "",
     password: "",
+    confirmPassword: "",
   });
   const [logo, setLogo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,10 @@ export function SignupPage() {
     e.preventDefault();
     setError(null);
     setFields({});
+    if (form.password !== form.confirmPassword) {
+      setFields({ confirmPassword: "Passwords do not match" });
+      return;
+    }
     setPending(true);
     try {
       const user = await signup({
@@ -38,6 +44,7 @@ export function SignupPage() {
         adminLastName: form.adminLastName,
         email: form.email,
         password: form.password,
+        phone: form.phone.trim() || undefined,
         logo,
       });
       navigate(homePathFor(user));
@@ -73,7 +80,7 @@ export function SignupPage() {
         required
       />
       <label className="block space-y-1.5">
-        <span className="text-sm text-[var(--color-muted)]">Company logo (optional)</span>
+        <span className="text-sm text-[var(--color-muted)]">Upload logo (optional)</span>
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -107,13 +114,22 @@ export function SignupPage() {
         />
       </div>
       <FormField
-        label="Admin email"
+        label="Email"
         name="email"
         type="email"
         value={form.email}
         onChange={(e) => set("email", e.target.value)}
         error={fields.email}
         required
+      />
+      <FormField
+        label="Phone"
+        name="phone"
+        type="tel"
+        value={form.phone}
+        onChange={(e) => set("phone", e.target.value)}
+        error={fields.phone}
+        placeholder="+91-98765-43210"
       />
       <FormField
         label="Password"
@@ -124,13 +140,22 @@ export function SignupPage() {
         error={fields.password}
         required
       />
+      <FormField
+        label="Confirm password"
+        name="confirmPassword"
+        type="password"
+        value={form.confirmPassword}
+        onChange={(e) => set("confirmPassword", e.target.value)}
+        error={fields.confirmPassword}
+        required
+      />
       {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}
         className="w-full rounded-md bg-[var(--color-accent)] py-2.5 font-medium text-white transition hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
       >
-        {pending ? "Creating…" : "Create company"}
+        {pending ? "Creating…" : "Sign Up"}
       </button>
     </AuthShell>
   );

@@ -114,8 +114,8 @@ export function defaultComponentTemplate(): ComponentInput[] {
     },
     {
       name: "Standard Allowance",
-      computationType: ComputationType.PERCENT_OF_BASIC,
-      value: 16.67,
+      computationType: ComputationType.FIXED_AMOUNT,
+      value: 4167,
       sequence: 3,
     },
     {

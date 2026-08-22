@@ -156,6 +156,7 @@ export const authService = {
           firstName: input.adminFirstName.trim(),
           lastName: input.adminLastName.trim(),
           dateOfJoining: joinDate,
+          phone: input.phone?.trim() || null,
         },
       });
 

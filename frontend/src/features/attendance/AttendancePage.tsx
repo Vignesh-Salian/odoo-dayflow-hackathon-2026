@@ -189,9 +189,9 @@ export function AttendancePage() {
       ) : data ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Stat label="Days present" value={String(data.counts.daysPresent)} />
-            <Stat label="Leave days" value={String(data.counts.leaveDays)} />
-            <Stat label="Working days" value={String(data.counts.totalWorkingDays)} />
+            <Stat label="Count of days present" value={String(data.counts.daysPresent)} />
+            <Stat label="Leaves count" value={String(data.counts.leaveDays)} />
+            <Stat label="Total working days" value={String(data.counts.totalWorkingDays)} />
           </div>
 
           <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
@@ -199,17 +199,16 @@ export function AttendancePage() {
               <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
                 <tr>
                   <th className="px-3 py-2 font-medium">Date</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Check-In</th>
-                  <th className="px-3 py-2 font-medium">Check-Out</th>
-                  <th className="px-3 py-2 font-medium">Work Hrs</th>
-                  <th className="px-3 py-2 font-medium">Extra</th>
+                  <th className="px-3 py-2 font-medium">Check In</th>
+                  <th className="px-3 py-2 font-medium">Check Out</th>
+                  <th className="px-3 py-2 font-medium">Work Hours</th>
+                  <th className="px-3 py-2 font-medium">Extra hours</th>
                 </tr>
               </thead>
               <tbody>
                 {data.records.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-[var(--color-muted)]">
+                    <td colSpan={5} className="px-3 py-6 text-center text-[var(--color-muted)]">
                       No attendance records this month.
                     </td>
                   </tr>
@@ -217,7 +216,6 @@ export function AttendancePage() {
                   data.records.map((r) => (
                     <tr key={r.id} className="border-t border-[var(--color-border)]">
                       <td className="px-3 py-2">{r.date}</td>
-                      <td className="px-3 py-2">{r.status}</td>
                       <td className="px-3 py-2">{formatTime(r.checkIn)}</td>
                       <td className="px-3 py-2">{formatTime(r.checkOut)}</td>
                       <td className="px-3 py-2">{r.workHours.toFixed(2)}</td>

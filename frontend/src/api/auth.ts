@@ -33,6 +33,7 @@ export type CompanySignupPayload = {
   adminLastName: string;
   email: string;
   password: string;
+  phone?: string;
   logo?: File | null;
 };
 
@@ -45,6 +46,7 @@ export const authApi = {
     form.append("adminLastName", payload.adminLastName);
     form.append("email", payload.email);
     form.append("password", payload.password);
+    if (payload.phone) form.append("phone", payload.phone);
     if (payload.logo) form.append("logo", payload.logo);
     return api.post<{ success: true; data: AuthResponse }>("/auth/company-signup", form, {
       headers: { "Content-Type": undefined },

@@ -71,7 +71,7 @@ export function TimeOffManagePage() {
 
   const allocationsQ = useQuery({
     queryKey: ["leave-allocations-all", allocPage],
-    enabled: isManager && tab === "allocations",
+    enabled: isManager,
     placeholderData: (prev) => prev,
     queryFn: async () =>
       (
@@ -88,6 +88,28 @@ export function TimeOffManagePage() {
     enabled: isManager,
     queryFn: async () => (await timeoffApi.leaveTypes()).data.data,
   });
+
+  const balanceChips = useMemo(() => {
+    const types = typesQ.data ?? [];
+    const paid =
+      types.find((t) => t.code === "PTO" || /paid/i.test(t.name)) ?? null;
+    const sick =
+      types.find((t) => t.code === "SICK" || /sick/i.test(t.name)) ?? null;
+    return [
+      paid
+        ? {
+            label: "Paid time off",
+            days: paid.defaultAllocation,
+          }
+        : null,
+      sick
+        ? {
+            label: "Sick time off",
+            days: sick.defaultAllocation,
+          }
+        : null,
+    ].filter(Boolean) as { label: string; days: number }[];
+  }, [typesQ.data]);
 
   const decideMut = useMutation({
     mutationFn: async () => {
@@ -134,13 +156,23 @@ export function TimeOffManagePage() {
     () => [
       {
         key: "employee",
-        header: "Employee",
+        header: "Name",
         render: (r) =>
           r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : r.employeeId.slice(0, 8),
       },
       {
+        key: "start",
+        header: "Start Date",
+        render: (r) => <span className="tabular-nums">{r.startDate}</span>,
+      },
+      {
+        key: "end",
+        header: "End Date",
+        render: (r) => <span className="tabular-nums">{r.endDate}</span>,
+      },
+      {
         key: "type",
-        header: "Type",
+        header: "Time off Type",
         render: (r) => (
           <span className="inline-flex items-center gap-2">
             <span
@@ -152,40 +184,8 @@ export function TimeOffManagePage() {
         ),
       },
       {
-        key: "dates",
-        header: "Dates",
-        render: (r) => (
-          <span className="tabular-nums">
-            {r.startDate} → {r.endDate}
-          </span>
-        ),
-      },
-      {
-        key: "days",
-        header: "Days",
-        className: "w-16",
-        render: (r) => <span className="tabular-nums">{r.days}</span>,
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (r) => (
-          <span
-            className={`rounded px-2 py-0.5 text-xs font-medium ${
-              r.status === "PENDING"
-                ? "bg-amber-500/15 text-amber-300"
-                : r.status === "APPROVED"
-                  ? "bg-[var(--color-success)]/15 text-[var(--color-success)]"
-                  : "bg-[var(--color-muted)]/20 text-[var(--color-muted)]"
-            }`}
-          >
-            {r.status}
-          </span>
-        ),
-      },
-      {
         key: "actions",
-        header: "Actions",
+        header: "Status",
         render: (r) =>
           r.status === "PENDING" ? (
             <ApprovalButtons
@@ -202,7 +202,15 @@ export function TimeOffManagePage() {
               loading={decideMut.isPending}
             />
           ) : (
-            <span className="text-xs text-[var(--color-muted)]">—</span>
+            <span
+              className={`rounded px-2 py-0.5 text-xs font-medium ${
+                r.status === "APPROVED"
+                  ? "bg-[var(--color-success)]/15 text-[var(--color-success)]"
+                  : "bg-[var(--color-muted)]/20 text-[var(--color-muted)]"
+              }`}
+            >
+              {r.status}
+            </span>
           ),
       },
     ],
@@ -276,9 +284,18 @@ export function TimeOffManagePage() {
         tabs={[
           {
             id: "requests",
-            label: "Requests",
+            label: "Time Off",
             content: (
               <div className="space-y-4">
+                {balanceChips.length > 0 ? (
+                  <div className="flex flex-wrap gap-4 text-sm font-medium text-[var(--color-tab)]">
+                    {balanceChips.map((c) => (
+                      <span key={c.label}>
+                        {c.label}: {c.days} Days Available
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap gap-3">
                   <SelectField
                     label="Status"
@@ -293,7 +310,7 @@ export function TimeOffManagePage() {
                     <option value="REJECTED">Rejected</option>
                   </SelectField>
                   <FormField
-                    label="Search employee"
+                    label="Searchbar"
                     name="search"
                     value={search}
                     placeholder="Name…"
@@ -319,28 +336,26 @@ export function TimeOffManagePage() {
           },
           {
             id: "allocations",
-            label: "Allocations",
+            label: "Allocation",
             content: (
               <div className="space-y-4">
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAllocError(null);
-                      setAllocFields({});
-                      setAllocOpen(true);
-                    }}
-                    className="rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    Set allocation
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAllocError(null);
+                    setAllocFields({});
+                    setAllocOpen(true);
+                  }}
+                  className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white"
+                >
+                  NEW
+                </button>
                 <DataTable
                   columns={allocationColumns}
                   rows={allocationsQ.data?.items ?? []}
                   rowKey={(a) => a.id}
                   loading={allocationsQ.isLoading}
-                  emptyMessage="No allocations for this year yet."
+                  emptyMessage="No allocations for this year."
                 />
                 <PaginationControls
                   page={allocPage}

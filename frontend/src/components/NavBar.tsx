@@ -6,6 +6,7 @@ import { NavLink } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../features/auth/AuthContext.tsx";
 import { notificationsApi } from "../api/notifications.ts";
+import { attendanceApi } from "../api/attendance.ts";
 import { Modal } from "./Modal.tsx";
 import { mediaUrl } from "../utils/format.ts";
 
@@ -23,7 +24,7 @@ export function NavBar() {
   const [bellOpen, setBellOpen] = useState(false);
 
   const notifQ = useQuery({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", user?.companyId, user?.id],
     enabled: !!user,
     queryFn: async () => (await notificationsApi.list({ limit: 20 })).data.data,
     refetchInterval: 60_000,
@@ -40,6 +41,18 @@ export function NavBar() {
   });
 
   const unread = notifQ.data?.unreadCount ?? 0;
+
+  const now = new Date();
+  const presenceQ = useQuery({
+    queryKey: ["attendance", "me", now.getMonth() + 1, now.getFullYear()],
+    enabled: !!user,
+    queryFn: async () =>
+      (await attendanceApi.me(now.getMonth() + 1, now.getFullYear())).data.data,
+    refetchInterval: 60_000,
+  });
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayRec = presenceQ.data?.records.find((r) => r.date === todayKey);
+  const inOffice = !!todayRec?.checkIn && !todayRec?.checkOut;
 
   return (
     <>
@@ -113,19 +126,25 @@ export function NavBar() {
                 </span>
               ) : null}
             </button>
-            <button
-              type="button"
+            <NavLink
+              to="/attendance"
               className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--color-accent-hover)]"
             >
               Check In
-            </button>
+            </NavLink>
             <div className="group relative">
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-surface-2)] text-sm font-semibold"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-surface-2)] text-sm font-semibold"
                 aria-label="Account menu"
               >
                 {(user?.firstName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-[var(--color-bg)] ${
+                    inOffice ? "bg-[var(--color-success)]" : "bg-[var(--color-danger)]"
+                  }`}
+                  title={inOffice ? "Checked in" : "Not checked in"}
+                />
               </button>
               <div className="invisible absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] py-1 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                 <NavLink to="/me" className="block px-3 py-2 text-sm hover:bg-[var(--color-surface-2)]">

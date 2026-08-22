@@ -13,6 +13,23 @@ import { getApiError } from "../../api/client.ts";
 import { timeoffApi, type LeaveType } from "../../api/timeoff.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 
+/** Weekdays minus public holidays (matches backend leave day counting). */
+function countLeaveDays(startDate: string, endDate: string, holidayDates: Set<string>) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(`${startDate}T12:00:00`);
+  const end = new Date(`${endDate}T12:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+  let days = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const key = cur.toISOString().slice(0, 10);
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6 && !holidayDates.has(key)) days += 1;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
+}
+
 export function TimeOffPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -47,6 +64,16 @@ export function TimeOffPage() {
   });
 
   const selectedType: LeaveType | undefined = typesQ.data?.find((t) => t.id === leaveTypeId);
+
+  const holidaySet = useMemo(
+    () => new Set((holidaysQ.data ?? []).map((h) => h.date.slice(0, 10))),
+    [holidaysQ.data],
+  );
+
+  const previewDays = useMemo(
+    () => countLeaveDays(startDate, endDate, holidaySet),
+    [startDate, endDate, holidaySet],
+  );
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -91,16 +118,17 @@ export function TimeOffPage() {
         label: r.leaveType?.name ?? "Leave",
         color:
           r.status === "PENDING"
-            ? "#eab308"
+            ? "#3b82f6"
             : r.status === "REJECTED"
-              ? "#64748b"
-              : (r.leaveType?.color ?? "#8b5cf6"),
+              ? "#ef4444"
+              : "#22c55e",
         status: r.status,
       })),
     [requestsQ.data],
   );
 
   const isManager = user?.role === "ADMIN" || user?.role === "HR";
+  const holidays = [...(holidaysQ.data ?? [])].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-6">
@@ -130,7 +158,7 @@ export function TimeOffPage() {
             }}
             className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]"
           >
-            New request
+            NEW
           </button>
         </div>
       </div>
@@ -140,7 +168,7 @@ export function TimeOffPage() {
           <StatCard
             key={a.id}
             label={a.leaveType.name}
-            value={`${a.remainingDays} days`}
+            value={`${a.remainingDays} Days Available`}
             hint={`${a.usedDays} used of ${a.allocatedDays}`}
             accent={a.leaveType.color ?? undefined}
           />
@@ -150,15 +178,40 @@ export function TimeOffPage() {
         ) : null}
       </div>
 
-      <Calendar
-        year={year}
-        events={events}
-        holidays={(holidaysQ.data ?? []).map((h) => ({ date: h.date, name: h.name }))}
-      />
+      <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
+        <Calendar
+          year={year}
+          events={events}
+          holidays={(holidaysQ.data ?? []).map((h) => ({ date: h.date, name: h.name }))}
+        />
+        <aside className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <h2 className="mb-3 text-sm font-semibold text-[var(--color-tab)]">Public holidays</h2>
+          {holidays.length === 0 ? (
+            <p className="text-sm text-[var(--color-muted)]">No holidays listed for {year}.</p>
+          ) : (
+            <ul className="max-h-[28rem] space-y-2 overflow-y-auto text-sm">
+              {holidays.map((h) => (
+                <li key={h.id ?? h.date + h.name} className="flex justify-between gap-2">
+                  <span className="text-[var(--color-muted)]">
+                    {new Date(`${h.date.slice(0, 10)}T12:00:00`).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <span className="text-right">{h.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-muted)]">
+            Green = approved · Blue = pending · Red = refused
+          </p>
+        </aside>
+      </div>
 
       <Modal
         open={modalOpen}
-        title="Request time off"
+        title="Time off Type Request"
         onClose={() => setModalOpen(false)}
         footer={
           <>
@@ -167,7 +220,7 @@ export function TimeOffPage() {
               className="rounded-md px-3 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-surface-2)]"
               onClick={() => setModalOpen(false)}
             >
-              Cancel
+              Discard
             </button>
             <button
               type="button"
@@ -190,8 +243,14 @@ export function TimeOffPage() {
               {formError}
             </p>
           ) : null}
+          <p className="text-sm text-[var(--color-muted)]">
+            Employee:{" "}
+            <strong className="text-[var(--color-text)]">
+              {user?.firstName} {user?.lastName}
+            </strong>
+          </p>
           <SelectField
-            label="Leave type"
+            label="Time off Type"
             name="leaveTypeId"
             value={leaveTypeId}
             error={fields.leaveTypeId}
@@ -207,7 +266,7 @@ export function TimeOffPage() {
           </SelectField>
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField
-              label="Start date"
+              label="From"
               name="startDate"
               type="date"
               value={startDate}
@@ -215,7 +274,7 @@ export function TimeOffPage() {
               onChange={(e) => setStartDate(e.target.value)}
             />
             <FormField
-              label="End date"
+              label="To"
               name="endDate"
               type="date"
               value={endDate}
@@ -223,6 +282,13 @@ export function TimeOffPage() {
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
+          <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm">
+            Allocation:{" "}
+            <strong className="tabular-nums">
+              {previewDays.toFixed(2)} Days
+            </strong>
+            <span className="text-[var(--color-muted)]"> (weekdays, excluding holidays)</span>
+          </p>
           <TextAreaField
             label="Reason (optional)"
             name="reason"
@@ -233,7 +299,9 @@ export function TimeOffPage() {
           />
           {selectedType?.requiresAttachment ? (
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--color-muted)]">Attachment</span>
+              <span className="text-sm text-[var(--color-muted)]">
+                Attachment (For sick leave certificate)
+              </span>
               <input
                 type="file"
                 name="attachment"

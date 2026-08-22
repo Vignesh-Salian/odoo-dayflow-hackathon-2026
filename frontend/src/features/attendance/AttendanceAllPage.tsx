@@ -171,12 +171,12 @@ export function AttendanceAllPage() {
             <table className="w-full min-w-[44rem] text-left text-sm">
               <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Employee</th>
-                  <th className="px-3 py-2 font-medium">Presence</th>
-                  <th className="px-3 py-2 font-medium">Check-In</th>
-                  <th className="px-3 py-2 font-medium">Check-Out</th>
+                  <th className="px-3 py-2 font-medium">Emp</th>
+                  <th className="px-3 py-2 font-medium">Check In</th>
+                  <th className="px-3 py-2 font-medium">Check Out</th>
                   <th className="px-3 py-2 font-medium">Work Hours</th>
-                  <th className="px-3 py-2 font-medium">Extra Hours</th>
+                  <th className="px-3 py-2 font-medium">Extra hours</th>
+                  <th className="px-3 py-2 font-medium">Presence</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,13 +195,13 @@ export function AttendanceAllPage() {
                         </div>
                         <div className="text-xs text-[var(--color-muted)]">{row.loginId}</div>
                       </td>
-                      <td className="px-3 py-2">
-                        <StatusDot status={row.presence} showLabel />
-                      </td>
                       <td className="px-3 py-2">{formatTime(row.checkIn)}</td>
                       <td className="px-3 py-2">{formatTime(row.checkOut)}</td>
                       <td className="px-3 py-2">{row.workHours.toFixed(2)}</td>
                       <td className="px-3 py-2">{row.extraHours.toFixed(2)}</td>
+                      <td className="px-3 py-2">
+                        <StatusDot status={row.presence} showLabel />
+                      </td>
                     </tr>
                   ))
                 )}

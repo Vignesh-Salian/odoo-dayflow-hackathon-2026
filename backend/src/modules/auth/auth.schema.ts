@@ -14,6 +14,10 @@ export const companySignupSchema = z.object({
   adminLastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email"),
   password: passwordSchema,
+  phone: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().min(7, "Phone is too short").max(20).optional(),
+  ),
 });
 
 export const loginSchema = z.object({
