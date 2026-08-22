@@ -306,12 +306,12 @@ export const timeoffService = {
     return serializeRequest(created);
   },
 
-  async myRequests(userId: string) {
+  async myRequests(userId: string, year?: number) {
     const employee = await timeoffRepository.findEmployeeByUserId(userId);
     if (!employee) {
       throw new AppError(404, "NO_EMPLOYEE", "No employee profile linked to this user");
     }
-    const rows = await timeoffRepository.listMyRequests(employee.id);
+    const rows = await timeoffRepository.listMyRequests(employee.id, { year });
     return rows.map(serializeRequest);
   },
 

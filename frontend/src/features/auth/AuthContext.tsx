@@ -21,6 +21,7 @@ type AuthContextValue = {
     adminLastName: string;
     email: string;
     password: string;
+    logo?: File | null;
   }) => Promise<AuthUser>;
   logout: () => void;
   setSession: (accessToken: string, refreshToken: string, user: AuthUser) => void;
@@ -103,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       adminLastName: string;
       email: string;
       password: string;
+      logo?: File | null;
     }) => {
       const { data } = await authApi.companySignup(payload);
       setSession(data.data.accessToken, data.data.refreshToken, data.data.user);

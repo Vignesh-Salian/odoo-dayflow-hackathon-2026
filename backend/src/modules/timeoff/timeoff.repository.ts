@@ -125,9 +125,19 @@ export const timeoffRepository = {
     });
   },
 
-  listMyRequests(employeeId: string) {
+  listMyRequests(employeeId: string, opts?: { year?: number }) {
+    const year = opts?.year;
+    const where = {
+      employeeId,
+      ...(year
+        ? {
+            startDate: { lte: new Date(Date.UTC(year, 11, 31)) },
+            endDate: { gte: new Date(Date.UTC(year, 0, 1)) },
+          }
+        : {}),
+    };
     return prisma.leaveRequest.findMany({
-      where: { employeeId },
+      where,
       include: { leaveType: true },
       orderBy: { startDate: "asc" },
     });

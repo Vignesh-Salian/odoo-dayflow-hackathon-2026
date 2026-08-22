@@ -29,6 +29,7 @@ import {
   leaveDecisionSchema,
   leaveRequestCreateSchema,
   leaveRequestsQuerySchema,
+  myLeaveRequestsQuerySchema,
   publicHolidaysQuerySchema,
 } from "./timeoff.schema.js";
 
@@ -75,7 +76,11 @@ timeoffRouter.post(
   timeoffController.createRequest,
 );
 
-timeoffRouter.get("/leave/requests/me", timeoffController.myRequests);
+timeoffRouter.get(
+  "/leave/requests/me",
+  validate(myLeaveRequestsQuerySchema, "query"),
+  timeoffController.myRequests,
+);
 
 timeoffRouter.get(
   "/leave/requests",

@@ -5,6 +5,23 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { payrollApi } from "../../api/payroll.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
+import { PaginationControls } from "../../components/PaginationControls.tsx";
+import { LoadingState } from "../../components/LoadingState.tsx";
+import { EmptyState } from "../../components/EmptyState.tsx";
+
+const PAGE_SIZE = 10;
+
+type PayslipRow = {
+  id: string;
+  month: number;
+  year: number;
+  netPay: string | number;
+};
+
+type MyPayslipsData = {
+  items: PayslipRow[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+};
 
 export function PayrollPage() {
   const { user } = useAuth();
@@ -13,18 +30,27 @@ export function PayrollPage() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [page, setPage] = useState(1);
 
   const mine = useQuery({
-    queryKey: ["payslips-me"],
-    queryFn: async () => (await payrollApi.myPayslips()).data.data,
+    queryKey: ["payslips-me", page],
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const res = await payrollApi.myPayslips({ page, limit: PAGE_SIZE });
+      return res.data.data as MyPayslipsData;
+    },
   });
 
   const generate = useMutation({
     mutationFn: () => payrollApi.generatePayslips({ month, year }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["payslips-me"] }),
+    onSuccess: () => {
+      setPage(1);
+      void qc.invalidateQueries({ queryKey: ["payslips-me"] });
+    },
   });
 
-  const slips = (mine.data as unknown[]) ?? [];
+  const slips = mine.data?.items ?? [];
+  const total = mine.data?.pagination.total ?? 0;
 
   return (
     <section className="space-y-6">
@@ -62,22 +88,26 @@ export function PayrollPage() {
       ) : null}
       <div className="space-y-2">
         <h2 className="font-semibold">My payslips</h2>
-        {mine.isLoading ? <p className="text-[var(--color-muted)]">Loading…</p> : null}
+        {mine.isLoading ? <LoadingState label="Loading payslips…" /> : null}
+        {!mine.isLoading && slips.length === 0 ? (
+          <EmptyState title="No payslips yet" description="Generate payroll for a month to see slips here." />
+        ) : null}
         <ul className="space-y-2">
-          {(slips as Array<Record<string, unknown>>).map((s) => (
+          {slips.map((s) => (
             <li
-              key={String(s.id)}
+              key={s.id}
               className="flex items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm"
             >
               <span>
-                {String(s.month)}/{String(s.year)} — net {String(s.netPay)}
+                {s.month}/{s.year} — net {String(s.netPay)}
               </span>
-              <a className="text-[var(--color-accent)]" href={payrollApi.pdfUrl(String(s.id))}>
+              <a className="text-[var(--color-accent)]" href={payrollApi.pdfUrl(s.id)}>
                 PDF
               </a>
             </li>
           ))}
         </ul>
+        <PaginationControls page={page} limit={PAGE_SIZE} total={total} onPageChange={setPage} />
       </div>
     </section>
   );

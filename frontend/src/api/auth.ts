@@ -26,16 +26,37 @@ export type AuthResponse = {
   user: AuthUser;
 };
 
+export type CompanySignupPayload = {
+  companyName: string;
+  country?: string;
+  adminFirstName: string;
+  adminLastName: string;
+  email: string;
+  password: string;
+  logo?: File | null;
+};
+
 export const authApi = {
-  companySignup(payload: {
-    companyName: string;
-    country?: string;
-    adminFirstName: string;
-    adminLastName: string;
-    email: string;
-    password: string;
-  }) {
-    return api.post<{ success: true; data: AuthResponse }>("/auth/company-signup", payload);
+  companySignup(payload: CompanySignupPayload) {
+    const form = new FormData();
+    form.append("companyName", payload.companyName);
+    if (payload.country) form.append("country", payload.country);
+    form.append("adminFirstName", payload.adminFirstName);
+    form.append("adminLastName", payload.adminLastName);
+    form.append("email", payload.email);
+    form.append("password", payload.password);
+    if (payload.logo) form.append("logo", payload.logo);
+    return api.post<{ success: true; data: AuthResponse }>("/auth/company-signup", form, {
+      headers: { "Content-Type": undefined },
+    });
+  },
+
+  updateCompanyLogo(logo: File) {
+    const form = new FormData();
+    form.append("logo", logo);
+    return api.post<{ success: true; data: AuthUser }>("/auth/company/logo", form, {
+      headers: { "Content-Type": undefined },
+    });
   },
 
   login(identifier: string, password: string) {

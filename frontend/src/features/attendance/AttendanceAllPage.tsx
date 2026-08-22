@@ -9,6 +9,10 @@ import { attendanceApi } from "../../api/attendance.ts";
 import { getApiError } from "../../api/client.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { StatusDot } from "./StatusDot.tsx";
+import { PaginationControls } from "../../components/PaginationControls.tsx";
+import { LoadingState } from "../../components/LoadingState.tsx";
+
+const PAGE_SIZE = 20;
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -30,16 +34,18 @@ export function AttendanceAllPage() {
   const [date, setDate] = useState(todayKey);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
 
   const isAdminHr = user?.role === "ADMIN" || user?.role === "HR";
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["attendance", "day", date, search],
+  const { data, isLoading, error, isFetching } = useQuery({
+    queryKey: ["attendance", "day", date, search, page],
     queryFn: async () => {
-      const res = await attendanceApi.dayView({ date, search, limit: 100 });
+      const res = await attendanceApi.dayView({ date, search, page, limit: PAGE_SIZE });
       return res.data.data;
     },
     enabled: isAdminHr,
+    placeholderData: (prev) => prev,
   });
 
   const summary = useMemo(() => {
@@ -76,7 +82,10 @@ export function AttendanceAllPage() {
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => setDate((d) => shiftDate(d, -1))}
+          onClick={() => {
+            setPage(1);
+            setDate((d) => shiftDate(d, -1));
+          }}
           className="rounded-md border border-[var(--color-border)] px-2 py-1 text-sm"
         >
           ←
@@ -84,19 +93,28 @@ export function AttendanceAllPage() {
         <input
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => {
+            setPage(1);
+            setDate(e.target.value);
+          }}
           className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm"
         />
         <button
           type="button"
-          onClick={() => setDate((d) => shiftDate(d, 1))}
+          onClick={() => {
+            setPage(1);
+            setDate((d) => shiftDate(d, 1));
+          }}
           className="rounded-md border border-[var(--color-border)] px-2 py-1 text-sm"
         >
           →
         </button>
         <button
           type="button"
-          onClick={() => setDate(todayKey())}
+          onClick={() => {
+            setPage(1);
+            setDate(todayKey());
+          }}
           className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted)]"
         >
           Today
@@ -105,6 +123,7 @@ export function AttendanceAllPage() {
           className="ml-auto flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
+            setPage(1);
             setSearch(searchInput.trim());
           }}
         >
@@ -127,7 +146,8 @@ export function AttendanceAllPage() {
       {summary ? (
         <div className="flex flex-wrap gap-4 text-sm text-[var(--color-muted)]">
           <span>
-            In office: <strong className="text-[var(--color-text)]">{summary.inOffice}</strong>
+            On this page — In office:{" "}
+            <strong className="text-[var(--color-text)]">{summary.inOffice}</strong>
           </span>
           <span>
             On leave: <strong className="text-[var(--color-text)]">{summary.onLeave}</strong>
@@ -136,56 +156,64 @@ export function AttendanceAllPage() {
             Absent: <strong className="text-[var(--color-text)]">{summary.absent}</strong>
           </span>
           <span>
-            Total: <strong className="text-[var(--color-text)]">{summary.total}</strong>
+            Company total: <strong className="text-[var(--color-text)]">{summary.total}</strong>
           </span>
         </div>
       ) : null}
 
       {isLoading ? (
-        <p className="text-[var(--color-muted)]">Loading day view…</p>
+        <LoadingState label="Loading day view…" />
       ) : error ? (
         <p className="text-[var(--color-danger)]">{getApiError(error).message}</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
-          <table className="w-full min-w-[44rem] text-left text-sm">
-            <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
-              <tr>
-                <th className="px-3 py-2 font-medium">Employee</th>
-                <th className="px-3 py-2 font-medium">Presence</th>
-                <th className="px-3 py-2 font-medium">Check-In</th>
-                <th className="px-3 py-2 font-medium">Check-Out</th>
-                <th className="px-3 py-2 font-medium">Work Hours</th>
-                <th className="px-3 py-2 font-medium">Extra Hours</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!data || data.items.length === 0 ? (
+        <div className={`space-y-4 ${isFetching ? "opacity-70" : ""}`}>
+          <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
+            <table className="w-full min-w-[44rem] text-left text-sm">
+              <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-[var(--color-muted)]">
-                    No employees found for this day.
-                  </td>
+                  <th className="px-3 py-2 font-medium">Employee</th>
+                  <th className="px-3 py-2 font-medium">Presence</th>
+                  <th className="px-3 py-2 font-medium">Check-In</th>
+                  <th className="px-3 py-2 font-medium">Check-Out</th>
+                  <th className="px-3 py-2 font-medium">Work Hours</th>
+                  <th className="px-3 py-2 font-medium">Extra Hours</th>
                 </tr>
-              ) : (
-                data.items.map((row) => (
-                  <tr key={row.employeeId} className="border-t border-[var(--color-border)]">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">
-                        {row.firstName} {row.lastName}
-                      </div>
-                      <div className="text-xs text-[var(--color-muted)]">{row.loginId}</div>
+              </thead>
+              <tbody>
+                {!data || data.items.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-6 text-center text-[var(--color-muted)]">
+                      No employees found for this day.
                     </td>
-                    <td className="px-3 py-2">
-                      <StatusDot status={row.presence} showLabel />
-                    </td>
-                    <td className="px-3 py-2">{formatTime(row.checkIn)}</td>
-                    <td className="px-3 py-2">{formatTime(row.checkOut)}</td>
-                    <td className="px-3 py-2">{row.workHours.toFixed(2)}</td>
-                    <td className="px-3 py-2">{row.extraHours.toFixed(2)}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  data.items.map((row) => (
+                    <tr key={row.employeeId} className="border-t border-[var(--color-border)]">
+                      <td className="px-3 py-2">
+                        <div className="font-medium">
+                          {row.firstName} {row.lastName}
+                        </div>
+                        <div className="text-xs text-[var(--color-muted)]">{row.loginId}</div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusDot status={row.presence} showLabel />
+                      </td>
+                      <td className="px-3 py-2">{formatTime(row.checkIn)}</td>
+                      <td className="px-3 py-2">{formatTime(row.checkOut)}</td>
+                      <td className="px-3 py-2">{row.workHours.toFixed(2)}</td>
+                      <td className="px-3 py-2">{row.extraHours.toFixed(2)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <PaginationControls
+            page={page}
+            limit={PAGE_SIZE}
+            total={data?.total ?? 0}
+            onPageChange={setPage}
+          />
         </div>
       )}
     </section>

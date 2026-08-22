@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { success } from "../../common/middleware/errorHandler.js";
+import { AppError } from "../../common/errors/AppError.js";
 import { authService } from "./auth.service.js";
 
 export const authController = {
@@ -71,6 +72,21 @@ export const authController = {
   async me(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await authService.me(req.user!.id);
+      return success(res, data);
+    } catch (e) {
+      return next(e);
+    }
+  },
+
+  async updateCompanyLogo(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        throw new AppError(400, "VALIDATION_ERROR", "Logo file is required", {
+          logo: "Logo file is required",
+        });
+      }
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const data = await authService.updateCompanyLogo(req.user!.id, logoUrl);
       return success(res, data);
     } catch (e) {
       return next(e);

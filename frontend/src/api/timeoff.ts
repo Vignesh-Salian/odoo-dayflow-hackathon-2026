@@ -111,8 +111,10 @@ export const timeoffApi = {
     });
   },
 
-  myRequests() {
-    return api.get<{ success: true; data: LeaveRequest[] }>("/leave/requests/me");
+  myRequests(year?: number) {
+    return api.get<{ success: true; data: LeaveRequest[] }>("/leave/requests/me", {
+      params: year ? { year } : undefined,
+    });
   },
 
   listRequests(params?: { status?: string; search?: string; page?: number; limit?: number }) {

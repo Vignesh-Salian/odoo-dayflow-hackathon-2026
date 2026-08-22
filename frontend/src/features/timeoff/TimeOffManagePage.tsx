@@ -2,7 +2,7 @@
  * OWNER: Prajwal (Person D)
  * Admin/HR leave approvals + allocations (WF7).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate } from "react-router-dom";
 import { ApprovalButtons } from "../../components/ApprovalButtons.tsx";
@@ -10,6 +10,7 @@ import { DataTable, type DataTableColumn } from "../../components/DataTable.tsx"
 import { FormField, SelectField } from "../../components/FormField.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { TabsPanel } from "../../components/TabsPanel.tsx";
+import { PaginationControls } from "../../components/PaginationControls.tsx";
 import { getApiError } from "../../api/client.ts";
 import {
   timeoffApi,
@@ -17,6 +18,10 @@ import {
   type LeaveRequest,
 } from "../../api/timeoff.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.ts";
+
+const REQUEST_PAGE_SIZE = 20;
+const ALLOC_PAGE_SIZE = 20;
 
 export function TimeOffManagePage() {
   const { user } = useAuth();
@@ -24,6 +29,9 @@ export function TimeOffManagePage() {
   const [tab, setTab] = useState("requests");
   const [status, setStatus] = useState("PENDING");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const [reqPage, setReqPage] = useState(1);
+  const [allocPage, setAllocPage] = useState(1);
   const [commentOpen, setCommentOpen] = useState<{
     id: string;
     decision: "approve" | "reject";
@@ -42,24 +50,37 @@ export function TimeOffManagePage() {
 
   const isManager = user?.role === "ADMIN" || user?.role === "HR";
 
+  useEffect(() => {
+    setReqPage(1);
+  }, [status, debouncedSearch]);
+
   const requestsQ = useQuery({
-    queryKey: ["leave-requests-all", status, search],
+    queryKey: ["leave-requests-all", status, debouncedSearch, reqPage],
     enabled: isManager,
+    placeholderData: (prev) => prev,
     queryFn: async () =>
       (
         await timeoffApi.listRequests({
           status: status || undefined,
-          search: search || undefined,
-          limit: 50,
+          search: debouncedSearch || undefined,
+          page: reqPage,
+          limit: REQUEST_PAGE_SIZE,
         })
       ).data.data,
   });
 
   const allocationsQ = useQuery({
-    queryKey: ["leave-allocations-all"],
+    queryKey: ["leave-allocations-all", allocPage],
     enabled: isManager && tab === "allocations",
+    placeholderData: (prev) => prev,
     queryFn: async () =>
-      (await timeoffApi.listAllocations({ year: new Date().getFullYear(), limit: 100 })).data.data,
+      (
+        await timeoffApi.listAllocations({
+          year: new Date().getFullYear(),
+          page: allocPage,
+          limit: ALLOC_PAGE_SIZE,
+        })
+      ).data.data,
   });
 
   const typesQ = useQuery({
@@ -244,10 +265,7 @@ export function TimeOffManagePage() {
             Approve or reject requests and adjust yearly allocations.
           </p>
         </div>
-        <Link
-          to="/timeoff"
-          className="text-sm text-[var(--color-tab)] hover:underline"
-        >
+        <Link to="/timeoff" className="text-sm text-[var(--color-tab)] hover:underline">
           ← My calendar
         </Link>
       </div>
@@ -290,6 +308,12 @@ export function TimeOffManagePage() {
                   loading={requestsQ.isLoading}
                   emptyMessage="No leave requests match these filters."
                 />
+                <PaginationControls
+                  page={reqPage}
+                  limit={REQUEST_PAGE_SIZE}
+                  total={requestsQ.data?.total ?? 0}
+                  onPageChange={setReqPage}
+                />
               </div>
             ),
           },
@@ -317,6 +341,12 @@ export function TimeOffManagePage() {
                   rowKey={(a) => a.id}
                   loading={allocationsQ.isLoading}
                   emptyMessage="No allocations for this year yet."
+                />
+                <PaginationControls
+                  page={allocPage}
+                  limit={ALLOC_PAGE_SIZE}
+                  total={allocationsQ.data?.total ?? 0}
+                  onPageChange={setAllocPage}
                 />
               </div>
             ),

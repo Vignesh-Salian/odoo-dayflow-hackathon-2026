@@ -23,7 +23,13 @@ const payslipInclude = {
       firstName: true,
       lastName: true,
       userId: true,
-      user: { select: { companyId: true } },
+      user: {
+        select: {
+          companyId: true,
+          loginId: true,
+          company: { select: { name: true, logoUrl: true } },
+        },
+      },
     },
   },
 } satisfies Prisma.PayslipInclude;
@@ -111,7 +117,7 @@ export const payrollRepository = {
     return Promise.all([
       prisma.payslip.findMany({
         where: { employeeId },
-        include: { lines: true },
+        // List view: skip line items (load on PDF/detail only)
         orderBy: [{ year: "desc" }, { month: "desc" }],
         skip,
         take,

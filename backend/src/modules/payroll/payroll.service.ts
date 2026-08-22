@@ -1,5 +1,5 @@
 /** OWNER: Nidhish (Person B) */
-import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import path from "node:path";
 import { AttendanceStatus, ComputationType, PayslipLineType, PayslipStatus, Role, WageType } from "@prisma/client";
 import { prisma } from "../../common/db/prisma.js";
@@ -18,6 +18,7 @@ import {
   defaultComponentTemplate,
   round2,
 } from "./salaryEngine.js";
+import { renderPayslipPdf } from "./payslipPdf.js";
 
 function isHrOrAdmin(role: Role): boolean {
   return role === Role.ADMIN || role === Role.HR;
@@ -272,24 +273,34 @@ export const payrollService = {
       throw new AppError(403, "FORBIDDEN", "You can only download your own payslips");
     }
 
-    const uploadDir = path.resolve(env.UPLOAD_DIR);
-    const fileName = `payslip-${payslip.id}.txt`;
-    const filePath = path.join(uploadDir, fileName);
-    await fs.mkdir(uploadDir, { recursive: true });
-    const lines = [
-      "DAYFLOW HRMS PAYSLIP",
-      `${payslip.employee.firstName} ${payslip.employee.lastName}`,
-      `Period: ${payslip.month}/${payslip.year}`,
-      `Working days: ${payslip.totalWorkingDays}`,
-      `Payable days: ${payslip.payableDays}`,
-      `LOP days: ${payslip.lopDays}`,
-      ...payslip.lines.map((line) => `${line.type}: ${line.name}: ${line.amount}`),
-      `Gross earnings: ${payslip.grossEarnings}`,
-      `Total deductions: ${payslip.totalDeductions}`,
-      `Net pay: ${payslip.netPay}`,
-    ];
-    await fs.writeFile(filePath, `${lines.join("\n")}\n`, "utf8");
-    await payrollRepository.updatePayslipPdf(payslip.id, `/uploads/${fileName}`);
-    return { filePath, fileName };
+    const company = payslip.employee.user.company;
+    const logoCandidate = company?.logoUrl
+      ? path.resolve(env.UPLOAD_DIR, path.basename(company.logoUrl))
+      : null;
+    const logoPath = logoCandidate && fsSync.existsSync(logoCandidate) ? logoCandidate : null;
+
+    const pdfUrl = await renderPayslipPdf(payslip.id, {
+      companyName: company?.name ?? "Dayflow",
+      logoPath,
+      employeeName: `${payslip.employee.firstName} ${payslip.employee.lastName}`,
+      loginId: payslip.employee.user.loginId,
+      month: payslip.month,
+      year: payslip.year,
+      grossEarnings: Number(payslip.grossEarnings),
+      totalDeductions: Number(payslip.totalDeductions),
+      netPay: Number(payslip.netPay),
+      payableDays: Number(payslip.payableDays),
+      lopDays: Number(payslip.lopDays),
+      totalWorkingDays: Number(payslip.totalWorkingDays),
+      lines: payslip.lines.map((line) => ({
+        name: line.name,
+        type: line.type as "EARNING" | "DEDUCTION",
+        amount: Number(line.amount),
+      })),
+    });
+
+    await payrollRepository.updatePayslipPdf(payslip.id, pdfUrl);
+    const filePath = path.resolve(env.UPLOAD_DIR, "payslips", path.basename(pdfUrl));
+    return { filePath, fileName: path.basename(filePath) };
   },
 };

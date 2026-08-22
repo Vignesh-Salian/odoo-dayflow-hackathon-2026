@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getApiError } from "../../api/client.ts";
 import { useAuth } from "./AuthContext.tsx";
 import { AuthShell, FormField } from "../../components/FormField.tsx";
+import { homePathFor } from "../../routes/guards.tsx";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -20,7 +21,7 @@ export function LoginPage() {
     setPending(true);
     try {
       const user = await login(identifier, password);
-      navigate(user.mustChangePassword ? "/change-password" : "/employees");
+      navigate(homePathFor(user));
     } catch (err) {
       const apiErr = getApiError(err);
       setError(apiErr.message);

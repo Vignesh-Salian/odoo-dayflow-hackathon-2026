@@ -42,14 +42,14 @@ export const analyticsRepository = {
 
   /** Stub payroll cost: sum of active monthly wages for company employees. */
   async sumActiveMonthlyWages(companyId: string) {
-    const rows = await prisma.salaryStructure.findMany({
+    const agg = await prisma.salaryStructure.aggregate({
       where: {
         isActive: true,
         employee: { user: { companyId, isActive: true } },
       },
-      select: { monthlyWage: true },
+      _sum: { monthlyWage: true },
     });
-    return rows.reduce((sum, r) => sum + Number(r.monthlyWage), 0);
+    return Number(agg._sum.monthlyWage ?? 0);
   },
 
   headcountByDepartment(companyId: string) {

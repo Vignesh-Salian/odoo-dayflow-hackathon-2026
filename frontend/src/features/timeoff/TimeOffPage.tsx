@@ -37,8 +37,8 @@ export function TimeOffPage() {
   });
 
   const requestsQ = useQuery({
-    queryKey: ["leave-requests-me"],
-    queryFn: async () => (await timeoffApi.myRequests()).data.data,
+    queryKey: ["leave-requests-me", year],
+    queryFn: async () => (await timeoffApi.myRequests(year)).data.data,
   });
 
   const holidaysQ = useQuery({

@@ -68,7 +68,8 @@ export const timeoffController = {
 
   async myRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await timeoffService.myRequests(req.user!.id);
+      const q = req.query as unknown as { year?: number };
+      const data = await timeoffService.myRequests(req.user!.id, q.year);
       return success(res, data);
     } catch (e) {
       return next(e);

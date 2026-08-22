@@ -3,7 +3,8 @@ import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
 import rateLimit from "express-rate-limit";
-import { authMiddleware } from "../../common/middleware/auth.js";
+import { authMiddleware, rbacMiddleware } from "../../common/middleware/auth.js";
+import { Role } from "@prisma/client";
 import { validate } from "../../common/middleware/validate.js";
 import { env } from "../../common/config/env.js";
 import { authController } from "./auth.controller.js";
@@ -61,3 +62,11 @@ authRouter.post(
 authRouter.post("/forgot-password", validate(forgotPasswordSchema), authController.forgotPassword);
 authRouter.post("/reset-password", validate(resetPasswordSchema), authController.resetPassword);
 authRouter.get("/me", authMiddleware, authController.me);
+
+authRouter.post(
+  "/company/logo",
+  authMiddleware,
+  rbacMiddleware(Role.ADMIN),
+  upload.single("logo"),
+  authController.updateCompanyLogo,
+);

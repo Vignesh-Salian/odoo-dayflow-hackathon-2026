@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../features/auth/AuthContext.tsx";
 import { notificationsApi } from "../api/notifications.ts";
 import { Modal } from "./Modal.tsx";
+import { mediaUrl } from "../utils/format.ts";
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 text-sm tracking-wide transition ${
@@ -17,6 +18,7 @@ export function NavBar() {
   const { user, logout } = useAuth();
   const qc = useQueryClient();
   const companyName = user?.company?.name ?? "Dayflow";
+  const logoSrc = mediaUrl(user?.company?.logoUrl ?? null);
   const isManager = user?.role === "ADMIN" || user?.role === "HR";
   const [bellOpen, setBellOpen] = useState(false);
 
@@ -45,18 +47,32 @@ export function NavBar() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-6">
             <NavLink
-              to="/employees"
-              className="font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
+              to={isManager ? "/employees" : "/me"}
+              className="flex items-center gap-2 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
             >
+              {logoSrc ? (
+                <img src={logoSrc} alt="" className="h-8 w-8 rounded object-contain" />
+              ) : null}
               {companyName}
             </NavLink>
             <nav className="hidden items-center gap-1 md:flex">
-              <NavLink to="/employees" className={linkClass}>
-                Employees
-              </NavLink>
+              {isManager ? (
+                <NavLink to="/employees" className={linkClass}>
+                  Employees
+                </NavLink>
+              ) : (
+                <NavLink to="/me" className={linkClass}>
+                  My Profile
+                </NavLink>
+              )}
               <NavLink to="/attendance" className={linkClass}>
                 Attendance
               </NavLink>
+              {isManager ? (
+                <NavLink to="/attendance/all" className={linkClass}>
+                  All attendance
+                </NavLink>
+              ) : null}
               <NavLink to="/timeoff" className={linkClass}>
                 Time Off
               </NavLink>
@@ -115,6 +131,22 @@ export function NavBar() {
                 <NavLink to="/me" className="block px-3 py-2 text-sm hover:bg-[var(--color-surface-2)]">
                   My Profile
                 </NavLink>
+                {user?.role === "ADMIN" ? (
+                  <>
+                    <NavLink
+                      to="/settings"
+                      className="block px-3 py-2 text-sm hover:bg-[var(--color-surface-2)]"
+                    >
+                      Company logo
+                    </NavLink>
+                    <NavLink
+                      to="/audit"
+                      className="block px-3 py-2 text-sm hover:bg-[var(--color-surface-2)]"
+                    >
+                      Audit log
+                    </NavLink>
+                  </>
+                ) : null}
                 <button
                   type="button"
                   onClick={logout}

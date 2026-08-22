@@ -4,6 +4,7 @@ import { getApiError } from "../../api/client.ts";
 import { authApi } from "../../api/auth.ts";
 import { useAuth } from "./AuthContext.tsx";
 import { AuthShell, FormField } from "../../components/FormField.tsx";
+import { homePathFor } from "../../routes/guards.tsx";
 
 export function ChangePasswordPage() {
   const { setSession, user } = useAuth();
@@ -22,7 +23,7 @@ export function ChangePasswordPage() {
     try {
       const { data } = await authApi.changePassword(currentPassword, newPassword);
       setSession(data.data.accessToken, data.data.refreshToken, data.data.user);
-      navigate("/employees");
+      navigate(homePathFor(data.data.user));
     } catch (err) {
       const apiErr = getApiError(err);
       setError(apiErr.message);

@@ -1,5 +1,19 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.tsx";
+import type { AuthUser } from "../api/auth.ts";
+
+/** Default landing path after login — employees never start on the HR directory. */
+export function homePathFor(user: AuthUser | null | undefined): string {
+  if (!user) return "/login";
+  if (user.mustChangePassword) return "/change-password";
+  if (user.role === "ADMIN" || user.role === "HR") return "/employees";
+  return "/me";
+}
+
+export function HomeRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={homePathFor(user)} replace />;
+}
 
 export function RequireAuth() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -36,7 +50,7 @@ export function GuestOnly() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={user?.mustChangePassword ? "/change-password" : "/employees"} replace />;
+    return <Navigate to={homePathFor(user)} replace />;
   }
 
   return <Outlet />;

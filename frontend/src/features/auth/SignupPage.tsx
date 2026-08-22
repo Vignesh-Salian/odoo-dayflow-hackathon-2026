@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getApiError } from "../../api/client.ts";
 import { useAuth } from "./AuthContext.tsx";
 import { AuthShell, FormField } from "../../components/FormField.tsx";
+import { homePathFor } from "../../routes/guards.tsx";
 
 export function SignupPage() {
   const { signup } = useAuth();
@@ -15,6 +16,7 @@ export function SignupPage() {
     email: "",
     password: "",
   });
+  const [logo, setLogo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
@@ -29,15 +31,16 @@ export function SignupPage() {
     setFields({});
     setPending(true);
     try {
-      await signup({
+      const user = await signup({
         companyName: form.companyName,
         country: form.country || undefined,
         adminFirstName: form.adminFirstName,
         adminLastName: form.adminLastName,
         email: form.email,
         password: form.password,
+        logo,
       });
-      navigate("/employees");
+      navigate(homePathFor(user));
     } catch (err) {
       const apiErr = getApiError(err);
       setError(apiErr.message);
@@ -50,7 +53,7 @@ export function SignupPage() {
   return (
     <AuthShell
       title="Create your company"
-      subtitle="Public sign-up creates the company and first admin only."
+      subtitle="Public sign-up creates the company and first admin only. Upload a logo for the navbar and payslips."
       onSubmit={onSubmit}
       footer={
         <>
@@ -69,6 +72,15 @@ export function SignupPage() {
         error={fields.companyName}
         required
       />
+      <label className="block space-y-1.5">
+        <span className="text-sm text-[var(--color-muted)]">Company logo (optional)</span>
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-1.5"
+          onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
+        />
+      </label>
       <FormField
         label="Country"
         name="country"

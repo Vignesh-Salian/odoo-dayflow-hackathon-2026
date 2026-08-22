@@ -13,8 +13,8 @@ export const payrollApi = {
   generatePayslips(body: { employeeId?: string; month: number; year: number }) {
     return api.post("/payroll/payslips/generate", body);
   },
-  myPayslips() {
-    return api.get("/payroll/payslips/me");
+  myPayslips(params?: { page?: number; limit?: number }) {
+    return api.get("/payroll/payslips/me", { params });
   },
   pdfUrl(id: string) {
     return `/api/v1/payroll/payslips/${id}/pdf`;

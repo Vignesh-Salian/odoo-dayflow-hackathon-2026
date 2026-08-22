@@ -378,4 +378,19 @@ export const authService = {
     if (!user) throw new AppError(404, "NOT_FOUND", "User not found");
     return publicUser(user);
   },
+
+  async updateCompanyLogo(userId: string, logoUrl: string) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) throw new AppError(404, "NOT_FOUND", "User not found");
+    if (user.role !== Role.ADMIN) {
+      throw new AppError(403, "FORBIDDEN", "Only ADMIN can update the company logo");
+    }
+    await prisma.company.update({
+      where: { id: user.companyId },
+      data: { logoUrl },
+    });
+    const refreshed = await authRepository.findUserById(userId);
+    if (!refreshed) throw new AppError(404, "NOT_FOUND", "User not found");
+    return publicUser(refreshed);
+  },
 };

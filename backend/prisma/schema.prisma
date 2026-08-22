@@ -314,6 +314,7 @@ model AttendanceRecord {
 
   @@unique([employeeId, date])
   @@index([employeeId, date])
+  @@index([date])
   @@map("attendance_records")
 }
 
@@ -331,6 +332,8 @@ model AttendanceRegularization {
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   approver User?    @relation("RegularizationApprover", fields: [approverId], references: [id], onDelete: SetNull)
 
+  @@index([employeeId])
+  @@index([status])
   @@map("attendance_regularizations")
 }
 
@@ -386,6 +389,8 @@ model LeaveRequest {
   leaveType LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id], onDelete: SetNull)
 
+  @@index([employeeId, status])
+  @@index([status, startDate, endDate])
   @@map("leave_requests")
 }
 
@@ -454,6 +459,7 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -471,6 +477,7 @@ model AuditLog {
   actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
 
   @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
   @@map("audit_logs")
 }
 

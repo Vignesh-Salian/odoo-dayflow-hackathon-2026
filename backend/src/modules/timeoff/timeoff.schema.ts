@@ -55,6 +55,11 @@ export const publicHolidaysQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100).optional(),
 });
 
+export const myLeaveRequestsQuerySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+});
+
 export type LeaveRequestCreateInput = z.infer<typeof leaveRequestCreateSchema>;
 export type LeaveDecisionInput = z.infer<typeof leaveDecisionSchema>;
 export type LeaveAllocationCreateInput = z.infer<typeof leaveAllocationCreateSchema>;
+export type MyLeaveRequestsQuery = z.infer<typeof myLeaveRequestsQuerySchema>;
