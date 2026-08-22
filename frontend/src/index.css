@@ -17,38 +17,11 @@
   --color-warning: #eab308;
 }
 
-@font-face {
-  font-family: "Syne";
-  font-style: normal;
-  font-weight: 600 800;
-  font-display: swap;
-  src: url("https://fonts.gstatic.com/s/syne/v22/8vIK7wMr0mhh-RQChyHE.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url("https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwA.woff2")
-    format("woff2");
-}
-
 :root {
   color-scheme: dark;
   font-family: var(--font-sans);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
   color: var(--color-text);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
 }
 
 body {
@@ -58,19 +31,12 @@ body {
     radial-gradient(1200px 600px at 10% -10%, rgba(139, 92, 246, 0.18), transparent 55%),
     radial-gradient(900px 500px at 90% 0%, rgba(59, 130, 246, 0.12), transparent 50%),
     var(--color-bg);
+  color: var(--color-text);
 }
 
 a {
   color: inherit;
   text-decoration: none;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
 }
 
 @keyframes modal-in {
