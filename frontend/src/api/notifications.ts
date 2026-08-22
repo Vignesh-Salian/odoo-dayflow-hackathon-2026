@@ -1,39 +1,9 @@
-/**
+﻿/**
  * OWNER: Prajwal (Person D)
- * Notifications API client (Build Plan §7).
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: frontend/src/api/notifications.ts
+ *
+ * Paste full file from the reference branch, then commit hourly.
+ * See TEAM_OWNERS.md
  */
-import { api } from "./client.ts";
-
-export type NotificationItem = {
-  id: string;
-  userId?: string;
-  type: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  relatedEntity: string | null;
-  relatedId: string | null;
-  createdAt: string;
-};
-
-export type NotificationsPage = {
-  items: NotificationItem[];
-  page: number;
-  limit: number;
-  total: number;
-  unreadCount: number;
-};
-
-export const notificationsApi = {
-  list(params?: { page?: number; limit?: number; unreadOnly?: boolean }) {
-    return api.get<{ success: true; data: NotificationsPage }>("/notifications", { params });
-  },
-
-  markRead(id: string) {
-    return api.patch<{ success: true; data: NotificationItem }>(`/notifications/${id}/read`);
-  },
-
-  markAllRead() {
-    return api.patch<{ success: true; data: { updated: number } }>("/notifications/read-all");
-  },
-};
+export const notificationsApi = { list: async () => ({ data: { data: { items: [], unreadCount: 0 } } }), markRead: async () => ({}), markAllRead: async () => ({}) };

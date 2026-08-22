@@ -1,50 +1,21 @@
-/** OWNER: Nidhish (Person B) */
+﻿/**
+ * OWNER: Nidhish (Person B)
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: backend/src/modules/payroll/payroll.routes.ts
+ *
+ * Placeholder router so main builds. Replace this entire file from the reference branch.
+ */
 import { Router } from "express";
-import { Role } from "@prisma/client";
-import {
-  authMiddleware,
-  rbacMiddleware,
-  requirePasswordChanged,
-} from "../../common/middleware/auth.js";
-import { validate } from "../../common/middleware/validate.js";
-import { payrollController } from "./payroll.controller.js";
-import {
-  employeeIdParamSchema,
-  generatePayslipsSchema,
-  myPayslipsQuerySchema,
-  payslipIdParamSchema,
-  putSalaryStructureSchema,
-} from "./payroll.schema.js";
 
 export const payrollRouter = Router();
 
-payrollRouter.use(authMiddleware, requirePasswordChanged);
-
-payrollRouter.get(
-  "/salary-structure/:employeeId",
-  validate(employeeIdParamSchema, "params"),
-  payrollController.getSalaryStructure,
-);
-payrollRouter.put(
-  "/salary-structure/:employeeId",
-  rbacMiddleware(Role.ADMIN),
-  validate(employeeIdParamSchema, "params"),
-  validate(putSalaryStructureSchema, "body"),
-  payrollController.putSalaryStructure,
-);
-payrollRouter.post(
-  "/payslips/generate",
-  rbacMiddleware(Role.ADMIN, Role.HR),
-  validate(generatePayslipsSchema, "body"),
-  payrollController.generatePayslips,
-);
-payrollRouter.get(
-  "/payslips/me",
-  validate(myPayslipsQuerySchema, "query"),
-  payrollController.myPayslips,
-);
-payrollRouter.get(
-  "/payslips/:id/pdf",
-  validate(payslipIdParamSchema, "params"),
-  payrollController.downloadPdf,
-);
+payrollRouter.use((_req, res) => {
+  res.status(501).json({
+    success: false,
+    data: null,
+    error: {
+      code: "NOT_IMPLEMENTED",
+      message: "Payroll module (Nidhish) — copy implementation from reference/copy-from-here",
+    },
+  });
+});

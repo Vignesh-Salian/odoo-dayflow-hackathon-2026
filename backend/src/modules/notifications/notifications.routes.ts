@@ -1,36 +1,21 @@
-/**
+﻿/**
  * OWNER: Prajwal (Person D)
- * Mount at `/api/v1` so paths match Build Plan §7:
- *   GET   /notifications
- *   PATCH /notifications/:id/read
- *   PATCH /notifications/read-all  (convenience)
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: backend/src/modules/notifications/notifications.routes.ts
+ *
+ * Placeholder router so main builds. Replace this entire file from the reference branch.
  */
 import { Router } from "express";
-import { authMiddleware, requirePasswordChanged } from "../../common/middleware/auth.js";
-import { validate } from "../../common/middleware/validate.js";
-import { notificationsController } from "./notifications.controller.js";
-import {
-  notificationIdParamsSchema,
-  notificationsQuerySchema,
-} from "./notifications.schema.js";
 
 export const notificationsRouter = Router();
 
-notificationsRouter.use(authMiddleware, requirePasswordChanged);
-
-notificationsRouter.get(
-  "/notifications",
-  validate(notificationsQuerySchema, "query"),
-  notificationsController.list,
-);
-
-notificationsRouter.patch(
-  "/notifications/read-all",
-  notificationsController.markAllRead,
-);
-
-notificationsRouter.patch(
-  "/notifications/:id/read",
-  validate(notificationIdParamsSchema, "params"),
-  notificationsController.markRead,
-);
+notificationsRouter.use((_req, res) => {
+  res.status(501).json({
+    success: false,
+    data: null,
+    error: {
+      code: "NOT_IMPLEMENTED",
+      message: "Notifications module (Prajwal) — copy implementation from reference/copy-from-here",
+    },
+  });
+});

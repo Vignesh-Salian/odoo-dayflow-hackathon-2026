@@ -1,12 +1,8 @@
 /**
- * OWNER: Prajwal (Person D) — shared form primitives (polished).
+ * OWNER: Prajwal (Person D) — design-system form controls.
+ * COPY FROM BRANCH: reference/copy-from-here → frontend/src/components/FormField.tsx
  */
-import type { FormEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
-
-const controlClass = (error?: string, className = "") =>
-  `w-full rounded-md border bg-[var(--color-surface)] px-3 py-2.5 outline-none transition focus:border-[var(--color-accent)] ${
-    error ? "border-[var(--color-danger)]" : "border-[var(--color-border)]"
-  } ${className}`;
+import type { FormEvent, InputHTMLAttributes, ReactNode } from "react";
 
 type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -18,55 +14,13 @@ export function FormField({ label, error, id, className = "", ...rest }: FormFie
   return (
     <label className="block space-y-1.5" htmlFor={fieldId}>
       <span className="text-sm text-[var(--color-muted)]">{label}</span>
-      <input id={fieldId} className={controlClass(error, className)} {...rest} />
-      {error ? <span className="block text-xs text-[var(--color-danger)]">{error}</span> : null}
-    </label>
-  );
-}
-
-type SelectFieldProps = SelectHTMLAttributes<HTMLSelectElement> & {
-  label: string;
-  error?: string;
-  children: ReactNode;
-};
-
-export function SelectField({
-  label,
-  error,
-  id,
-  className = "",
-  children,
-  ...rest
-}: SelectFieldProps) {
-  const fieldId = id ?? rest.name;
-  return (
-    <label className="block space-y-1.5" htmlFor={fieldId}>
-      <span className="text-sm text-[var(--color-muted)]">{label}</span>
-      <select id={fieldId} className={controlClass(error, className)} {...rest}>
-        {children}
-      </select>
-      {error ? <span className="block text-xs text-[var(--color-danger)]">{error}</span> : null}
-    </label>
-  );
-}
-
-type TextAreaFieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  label: string;
-  error?: string;
-};
-
-export function TextAreaField({
-  label,
-  error,
-  id,
-  className = "",
-  ...rest
-}: TextAreaFieldProps) {
-  const fieldId = id ?? rest.name;
-  return (
-    <label className="block space-y-1.5" htmlFor={fieldId}>
-      <span className="text-sm text-[var(--color-muted)]">{label}</span>
-      <textarea id={fieldId} className={controlClass(error, `resize-y ${className}`)} {...rest} />
+      <input
+        id={fieldId}
+        className={`w-full rounded-md border bg-[var(--color-surface)] px-3 py-2.5 outline-none transition focus:border-[var(--color-accent)] ${
+          error ? "border-[var(--color-danger)]" : "border-[var(--color-border)]"
+        } ${className}`}
+        {...rest}
+      />
       {error ? <span className="block text-xs text-[var(--color-danger)]">{error}</span> : null}
     </label>
   );

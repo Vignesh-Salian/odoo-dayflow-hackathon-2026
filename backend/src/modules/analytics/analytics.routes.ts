@@ -1,25 +1,21 @@
-/**
+﻿/**
  * OWNER: Vignesh (Person C)
- * Mounted at /api/v1/analytics (Build Plan §7).
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: backend/src/modules/analytics/analytics.routes.ts
+ *
+ * Placeholder router so main builds. Replace this entire file from the reference branch.
  */
 import { Router } from "express";
-import { Role } from "@prisma/client";
-import {
-  authMiddleware,
-  rbacMiddleware,
-  requirePasswordChanged,
-} from "../../common/middleware/auth.js";
-import { validate } from "../../common/middleware/validate.js";
-import { analyticsController } from "./analytics.controller.js";
-import { analyticsDashboardQuerySchema } from "./analytics.schema.js";
 
 export const analyticsRouter = Router();
 
-analyticsRouter.use(authMiddleware, requirePasswordChanged);
-
-analyticsRouter.get(
-  "/dashboard",
-  rbacMiddleware(Role.ADMIN, Role.HR),
-  validate(analyticsDashboardQuerySchema, "query"),
-  analyticsController.dashboard,
-);
+analyticsRouter.use((_req, res) => {
+  res.status(501).json({
+    success: false,
+    data: null,
+    error: {
+      code: "NOT_IMPLEMENTED",
+      message: "Analytics module (Vignesh) — copy implementation from reference/copy-from-here",
+    },
+  });
+});

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/**
+ * OWNER: Prajwal (Person D) — design tokens / theme polish.
+ * COPY FROM BRANCH: reference/copy-from-here → frontend/src/index.css
+ */
+
 @theme {
   --font-sans: "DM Sans", "Segoe UI", sans-serif;
   --font-display: "Syne", "DM Sans", sans-serif;

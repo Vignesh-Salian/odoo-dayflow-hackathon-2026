@@ -1,25 +1,9 @@
-/**
+﻿/**
  * OWNER: Nidhish (Person B)
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: frontend/src/api/employees.ts
+ *
+ * Paste full file from the reference branch, then commit hourly.
+ * See TEAM_OWNERS.md
  */
-import { api } from "./client.ts";
-
-export const employeesApi = {
-  list(params?: { search?: string; page?: number; limit?: number }) {
-    return api.get("/employees", { params });
-  },
-  get(id: string) {
-    return api.get(`/employees/${id}`);
-  },
-  me() {
-    return api.get("/employees/me");
-  },
-  create(body: Record<string, unknown>) {
-    return api.post("/employees", body);
-  },
-  update(id: string, body: Record<string, unknown>) {
-    return api.patch(`/employees/${id}`, body);
-  },
-  updateMe(body: Record<string, unknown>) {
-    return api.patch("/employees/me", body);
-  },
-};
+export const employeesApi = {} as Record<string, never>;

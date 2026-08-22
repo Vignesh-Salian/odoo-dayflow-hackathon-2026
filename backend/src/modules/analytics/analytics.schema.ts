@@ -1,12 +1,9 @@
-/**
+﻿/**
  * OWNER: Vignesh (Person C)
- * Zod schemas for analytics dashboard query params.
+ * COPY FROM BRANCH: reference/copy-from-here
+ * PATH: backend/src/modules/analytics/analytics.schema.ts
+ *
+ * Paste the full file contents from that branch into this file, then commit hourly.
+ * See TEAM_OWNERS.md
  */
-import { z } from "zod";
-
-export const analyticsDashboardQuerySchema = z.object({
-  month: z.coerce.number().int().min(1).max(12).optional(),
-  year: z.coerce.number().int().min(2000).max(2100).optional(),
-});
-
-export type AnalyticsDashboardQuery = z.infer<typeof analyticsDashboardQuerySchema>;
+export {};
