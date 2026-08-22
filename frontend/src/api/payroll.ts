@@ -1,5 +1,7 @@
 /**
  * OWNER: Nidhish (Person B)
+ * PLACEHOLDER — Phase 8 page params. Copy from reference:
+ *   git show reference/copy-from-here:frontend/src/api/payroll.ts > frontend/src/api/payroll.ts
  */
 import { api } from "./client.ts";
 
@@ -13,8 +15,8 @@ export const payrollApi = {
   generatePayslips(body: { employeeId?: string; month: number; year: number }) {
     return api.post("/payroll/payslips/generate", body);
   },
-  myPayslips(params?: { page?: number; limit?: number }) {
-    return api.get("/payroll/payslips/me", { params });
+  myPayslips(_params?: { page?: number; limit?: number }) {
+    return api.get("/payroll/payslips/me");
   },
   pdfUrl(id: string) {
     return `/api/v1/payroll/payslips/${id}/pdf`;
