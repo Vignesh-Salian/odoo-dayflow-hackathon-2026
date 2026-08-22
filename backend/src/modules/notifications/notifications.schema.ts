@@ -1,9 +1,18 @@
-﻿/**
+/**
  * OWNER: Prajwal (Person D)
- * COPY FROM BRANCH: reference/copy-from-here
- * PATH: backend/src/modules/notifications/notifications.schema.ts
- *
- * Paste the full file contents from that branch into this file, then commit hourly.
- * See TEAM_OWNERS.md
+ * Zod schemas for notifications.
  */
-export {};
+import { z } from "zod";
+
+export const notificationsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  unreadOnly: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true"),
+});
+
+export const notificationIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
