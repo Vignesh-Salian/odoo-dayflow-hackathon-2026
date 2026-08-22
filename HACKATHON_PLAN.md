@@ -1,7 +1,7 @@
 # Odoo x NMIT Hackathon '26 - Master Execution Plan
 
 > **Core Philosophy**: Strong real-world software engineering over flashy gimmicks.  
-> Priorities: Problem Understanding $\rightarrow$ Database Design $\rightarrow$ Backend APIs $\rightarrow$ Real Dynamic Data $\rightarrow$ Input Validation & Error Handling $\rightarrow$ Interactive UI $\rightarrow$ End-to-End Integration $\rightarrow$ Demo.
+> Priorities: Problem Understanding $\rightarrow$ Database Design $\rightarrow$ Backend APIs $\rightarrow$ Real Dynamic Data $\rightarrow$ Input Validation & Error Handling $\rightarrow$ Interactive UI $\rightarrow$ End-to-End Integration $\rightarrow$ Demo .
 
 ---
 
@@ -9,16 +9,16 @@
 
 | Time Window | Phase | Primary Engineering Objectives | Deliverables / Checkpoints |
 | :--- | :--- | :--- | :--- |
-| **8:30 – 9:00 AM** | **Problem Analysis** | Complete 18-Point deconstruction, define domain entities, inputs/outputs | 18-Point Analysis Document & Team Alignment |
-| **9:00 – 9:30 AM** | **Database & Architecture** | Define relational schema (PostgreSQL/MySQL), API contracts, roles | Submit GitHub Repo, Add Evaluator, DB Initialized |
-| **9:30 – 11:00 AM** | **MVP Foundation** | Build the first end-to-end flow: Form $\rightarrow$ Validation $\rightarrow$ API $\rightarrow$ Database $\rightarrow$ UI Table | Working End-to-End Thin Slice on `main` |
-| **11:00 – 1:00 PM** | **Core Feature Build** | Parallel implementation of core business logic, CRUD, validation rules | Hourly Commits & Merged Core Flows |
-| **1:00 – 2:00 PM** | **Integration & Real Data** | Connect frontend components with backend endpoints, verify dynamic DB updates | Full-Stack Working System with Real Dynamic Data |
-| **2:00 – 3:30 PM** | **Edge Cases & Differentiators** | Comprehensive validation rules, constraint checks, analytics/differentiators | Feature Freeze (No new features after 3:30) |
-| **3:30 – 4:15 PM** | **Testing & Bug Fixes** | Edge cases, form validation, error states, empty states, UI polish | Robust, Zero-Crash Build on `main` |
-| **4:15 – 4:45 PM** | **Demo Prep & Script** | Rehearse 5-min demo flow, prepare realistic test data in PostgreSQL/MySQL | Recorded Dry Run / Script Ready |
-| **4:45 – 5:00 PM** | **Code Freeze & Final Push** | Final GitHub repository review, update README with screenshots | Coding Ends (5:00 PM Hard Stop) |
-| **5:00 – 5:30 PM** | **Demo Video Submission** | Record, upload open-access video (<= 5 min), submit final link | Submission Completed Before 5:30 PM |
+| **8:30 â€“ 9:00 AM** | **Problem Analysis** | Complete 18-Point deconstruction, define domain entities, inputs/outputs | 18-Point Analysis Document & Team Alignment |
+| **9:00 â€“ 9:30 AM** | **Database & Architecture** | Define relational schema (PostgreSQL/MySQL), API contracts, roles | Submit GitHub Repo, Add Evaluator, DB Initialized |
+| **9:30 â€“ 11:00 AM** | **MVP Foundation** | Build the first end-to-end flow: Form $\rightarrow$ Validation $\rightarrow$ API $\rightarrow$ Database $\rightarrow$ UI Table | Working End-to-End Thin Slice on `main` |
+| **11:00 â€“ 1:00 PM** | **Core Feature Build** | Parallel implementation of core business logic, CRUD, validation rules | Hourly Commits & Merged Core Flows |
+| **1:00 â€“ 2:00 PM** | **Integration & Real Data** | Connect frontend components with backend endpoints, verify dynamic DB updates | Full-Stack Working System with Real Dynamic Data |
+| **2:00 â€“ 3:30 PM** | **Edge Cases & Differentiators** | Comprehensive validation rules, constraint checks, analytics/differentiators | Feature Freeze (No new features after 3:30) |
+| **3:30 â€“ 4:15 PM** | **Testing & Bug Fixes** | Edge cases, form validation, error states, empty states, UI polish | Robust, Zero-Crash Build on `main` |
+| **4:15 â€“ 4:45 PM** | **Demo Prep & Script** | Rehearse 5-min demo flow, prepare realistic test data in PostgreSQL/MySQL | Recorded Dry Run / Script Ready |
+| **4:45 â€“ 5:00 PM** | **Code Freeze & Final Push** | Final GitHub repository review, update README with screenshots | Coding Ends (5:00 PM Hard Stop) |
+| **5:00 â€“ 5:30 PM** | **Demo Video Submission** | Record, upload open-access video (<= 5 min), submit final link | Submission Completed Before 5:30 PM |
 
 ---
 
@@ -37,7 +37,7 @@
 
 ---
 
-## ?? 8:30 AM Official 18-Point Problem Statement Analysis Framework
+## ?? 8:30 AM Official 18-Point Problem Statement Analysis  Framework
 *(Copy and complete this at 8:30 AM before writing any code)*
 
 ```markdown
