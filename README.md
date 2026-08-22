@@ -1,4 +1,4 @@
-# Dayflow — Human Resource Management System (HRMS)
+# Dayflow â€” Human Resource Management System (HRMS)
 
 > **Odoo x NMIT Bangalore Hackathon '26 Virtual Round Project**  
 > *Track*: HRMS & Enterprise Software  
@@ -6,7 +6,7 @@
 
 ---
 
-## ?? Executive Summary
+## Executive Summary
 **Dayflow** is a complete, production-grade Human Resource Management System built with Python FastAPI, PostgreSQL (via SQLAlchemy), React, Vite, and Tailwind CSS. It provides role-gated administration for HR Officers and self-service capabilities for employees across employee onboarding, profile management, attendance tracking, time-off leave approval workflows, and formula-driven payroll calculation.
 
 ---
@@ -15,20 +15,20 @@
 
 ```
 +---------------------------------------------------------+
-¦                    Frontend Layer                       ¦
-¦       React 18 + Vite + Tailwind CSS + Lucide Icons     ¦
+Â¦                    Frontend Layer                       Â¦
+Â¦       React 18 + Vite + Tailwind CSS + Lucide Icons     Â¦
 +---------------------------------------------------------+
-                             ¦ REST API (Axios + JWT Bearer)
+                             Â¦ REST API (Axios + JWT Bearer)
 +----------------------------?----------------------------+
-¦                    Backend Layer                        ¦
-¦          FastAPI (Python 3.10+) + Pydantic v2           ¦
-¦     (JWT Auth, Role Security, Validation Middleware)    ¦
+Â¦                    Backend Layer                        Â¦
+Â¦          FastAPI (Python 3.10+) + Pydantic v2           Â¦
+Â¦     (JWT Auth, Role Security, Validation Middleware)    Â¦
 +---------------------------------------------------------+
-                ¦                         ¦
+                Â¦                         Â¦
 +---------------?----------+   +----------?---------------+
-¦   Relational Database    ¦   ¦  Business Service Layer  ¦
-¦       PostgreSQL         ¦   ¦  Formula Payroll Engine  ¦
-¦  (SQLAlchemy Engine)     ¦   ¦  Attendance Hour Calc    ¦
+Â¦   Relational Database    Â¦   Â¦  Business Service Layer  Â¦
+Â¦       PostgreSQL         Â¦   Â¦  Formula Payroll Engine  Â¦
+Â¦  (SQLAlchemy Engine)     Â¦   Â¦  Attendance Hour Calc    Â¦
 +--------------------------+   +--------------------------+
 ```
 
@@ -69,7 +69,7 @@ npm install
 
 ---
 
-### ?? DEVELOPER 1 — Backend Core, Database & Authentication
+### ?? DEVELOPER 1 â€” Backend Core, Database & Authentication
 
 #### ?? Primary Ownership & Files
 * `backend/app/models/auth_models.py`
@@ -94,7 +94,7 @@ npm install
 
 ---
 
-### ?? DEVELOPER 2 — Frontend Core, Auth Shell & Dashboards
+### ?? DEVELOPER 2 â€” Frontend Core, Auth Shell & Dashboards
 
 #### ?? Primary Ownership & Files
 * `frontend/src/context/AuthContext.jsx`
@@ -118,7 +118,7 @@ npm install
 
 ---
 
-### ?? DEVELOPER 3 — Attendance Module (Full-Stack Vertical)
+### ?? DEVELOPER 3 â€” Attendance Module (Full-Stack Vertical)
 
 #### ?? Primary Ownership & Files
 * `backend/app/routes/attendance.py`
@@ -143,7 +143,7 @@ npm install
 
 ---
 
-### ?? DEVELOPER 4 — Time-Off Leave & Payroll Engine (Full-Stack Vertical)
+### ?? DEVELOPER 4 â€” Time-Off Leave & Payroll Engine (Full-Stack Vertical)
 
 #### ?? Primary Ownership & Files
 * `backend/app/routes/leave.py`
