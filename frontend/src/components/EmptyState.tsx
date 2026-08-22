@@ -1,8 +1,5 @@
 /**
  * OWNER: Prajwal (Person D) — Phase 7 UI polish
- *
- * PLACEHOLDER on `main`. Copy the full file from `reference/copy-from-here`:
- *   git show reference/copy-from-here:frontend/src/components/EmptyState.tsx > frontend/src/components/EmptyState.tsx
  */
 type EmptyStateProps = {
   title: string;
@@ -11,7 +8,20 @@ type EmptyStateProps = {
   onAction?: () => void;
 };
 
-/** TODO: copy full EmptyState from reference/copy-from-here */
-export function EmptyState({ title }: EmptyStateProps) {
-  return <div data-placeholder="EmptyState">{title}</div>;
+export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-14 text-center">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold">{title}</h2>
+      {description ? <p className="max-w-md text-sm text-[var(--color-muted)]">{description}</p> : null}
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-accent-hover)]"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
 }
