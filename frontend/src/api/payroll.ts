@@ -1,9 +1,22 @@
-﻿/**
+/**
  * OWNER: Nidhish (Person B)
- * COPY FROM BRANCH: reference/copy-from-here
- * PATH: frontend/src/api/payroll.ts
- *
- * Paste full file from the reference branch, then commit hourly.
- * See TEAM_OWNERS.md
  */
-export const payrollApi = {} as Record<string, never>;
+import { api } from "./client.ts";
+
+export const payrollApi = {
+  getSalaryStructure(employeeId: string) {
+    return api.get(`/payroll/salary-structure/${employeeId}`);
+  },
+  putSalaryStructure(employeeId: string, body: Record<string, unknown>) {
+    return api.put(`/payroll/salary-structure/${employeeId}`, body);
+  },
+  generatePayslips(body: { employeeId?: string; month: number; year: number }) {
+    return api.post("/payroll/payslips/generate", body);
+  },
+  myPayslips() {
+    return api.get("/payroll/payslips/me");
+  },
+  pdfUrl(id: string) {
+    return `/api/v1/payroll/payslips/${id}/pdf`;
+  },
+};
