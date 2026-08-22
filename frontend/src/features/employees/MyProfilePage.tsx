@@ -93,7 +93,7 @@ export function MyProfilePage() {
     {
       id: "private",
       label: "Private Info",
-      content: <PrivateInfoTab emp={emp} canEdit queryKey={qk} />,
+      content: <PrivateInfoTab emp={emp} canEdit selfEdit queryKey={qk} />,
     },
     {
       id: "salary",

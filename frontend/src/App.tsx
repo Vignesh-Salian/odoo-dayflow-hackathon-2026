@@ -5,6 +5,9 @@ import { ThemeProvider } from "./features/theme/ThemeContext.tsx";
 import { LoginPage } from "./features/auth/LoginPage.tsx";
 import { SignupPage } from "./features/auth/SignupPage.tsx";
 import { ChangePasswordPage } from "./features/auth/ChangePasswordPage.tsx";
+import { VerifyEmailPage } from "./features/auth/VerifyEmailPage.tsx";
+import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage.tsx";
+import { ResetPasswordPage } from "./features/auth/ResetPasswordPage.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { GuestOnly, HomeRedirect, RequireAuth } from "./routes/guards.tsx";
 import { EmployeesPage } from "./features/employees/EmployeesPage.tsx";
@@ -42,7 +45,12 @@ export default function App() {
             <Route element={<GuestOnly />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
+
+            {/* Public — works even if already signed in after company signup */}
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
 
             <Route element={<RequireAuth />}>
               <Route path="/change-password" element={<ChangePasswordPage />} />

@@ -2,6 +2,7 @@ import { Prisma, Role, TokenType } from "@prisma/client";
 import { prisma } from "../../common/db/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
 import { env } from "../../common/config/env.js";
+import { mailTemplates, sendMail } from "../../common/email/mailer.js";
 import {
   companyCodeFromName,
   generateOpaqueToken,
@@ -204,9 +205,12 @@ export const authService = {
       expiresAt: addDays(2),
     });
 
-    // Phase 1: log verification link (email service later)
-    console.info(
-      `[email-verify] ${env.APP_URL}/verify-email?token=${verifyToken} → ${result.user.email}`,
+    void sendMail(
+      mailTemplates.verifyEmail({
+        to: result.user.email,
+        name: result.employee.firstName,
+        token: verifyToken,
+      }),
     );
 
     const tokens = await issueTokens({
@@ -349,6 +353,7 @@ export const authService = {
     });
 
     console.info(`[password-reset] ${env.APP_URL}/reset-password?token=${token} → ${user.email}`);
+    void sendMail(mailTemplates.passwordReset({ to: user.email, token }));
     return {
       sent: true,
       resetToken: env.NODE_ENV === "development" ? token : undefined,

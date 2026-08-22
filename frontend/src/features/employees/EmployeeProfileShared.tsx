@@ -561,16 +561,29 @@ export function ResumeTab({
 export function PrivateInfoTab({
   emp,
   canEdit = false,
+  selfEdit = false,
   queryKey,
 }: {
   emp: ProfileEmp;
   canEdit?: boolean;
+  /** When true, PATCH /employees/me (employee editing themselves). */
+  selfEdit?: boolean;
   queryKey: unknown[];
 }) {
   const qc = useQueryClient();
   const bank = emp.bankDetails;
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [editingBank, setEditingBank] = useState(false);
+  const [personalForm, setPersonalForm] = useState({
+    phone: emp.phone ?? "",
+    residingAddress: emp.residingAddress ?? "",
+    personalEmail: emp.personalEmail ?? "",
+    nationality: emp.nationality ?? "",
+    dateOfBirth: emp.dateOfBirth ? emp.dateOfBirth.slice(0, 10) : "",
+    gender: emp.gender ?? "",
+    maritalStatus: emp.maritalStatus ?? "",
+  });
+  const [bankForm, setBankForm] = useState({
     accountHolderName: bank?.accountHolderName ?? "",
     accountNumber: bank?.accountNumber ?? "",
     bankName: bank?.bankName ?? "",
@@ -580,26 +593,63 @@ export function PrivateInfoTab({
     uanNo: bank?.uanNo ?? "",
     empCode: bank?.empCode ?? "",
   });
-  const [error, setError] = useState<string | null>(null);
+  const [personalError, setPersonalError] = useState<string | null>(null);
+  const [bankError, setBankError] = useState<string | null>(null);
+
+  function openPersonalEdit() {
+    setPersonalForm({
+      phone: emp.phone ?? "",
+      residingAddress: emp.residingAddress ?? "",
+      personalEmail: emp.personalEmail ?? "",
+      nationality: emp.nationality ?? "",
+      dateOfBirth: emp.dateOfBirth ? emp.dateOfBirth.slice(0, 10) : "",
+      gender: emp.gender ?? "",
+      maritalStatus: emp.maritalStatus ?? "",
+    });
+    setPersonalError(null);
+    setEditingPersonal(true);
+  }
+
+  const savePersonal = useMutation({
+    mutationFn: () => {
+      const body = {
+        phone: personalForm.phone.trim() || null,
+        residingAddress: personalForm.residingAddress.trim() || null,
+        personalEmail: personalForm.personalEmail.trim() || null,
+        nationality: personalForm.nationality.trim() || null,
+        dateOfBirth: personalForm.dateOfBirth || null,
+        gender: personalForm.gender || null,
+        maritalStatus: personalForm.maritalStatus || null,
+      };
+      return selfEdit ? employeesApi.updateMe(body) : employeesApi.update(emp.id, body);
+    },
+    onSuccess: async () => {
+      setEditingPersonal(false);
+      setPersonalError(null);
+      await qc.invalidateQueries({ queryKey });
+      await qc.invalidateQueries({ queryKey: ["employees-me"] });
+    },
+    onError: (err) => setPersonalError(getApiError(err).message),
+  });
 
   const saveBank = useMutation({
     mutationFn: () =>
       employeesApi.putBank(emp.id, {
-        accountHolderName: form.accountHolderName.trim() || null,
-        accountNumber: form.accountNumber.trim(),
-        bankName: form.bankName.trim(),
-        branchName: form.branchName.trim() || null,
-        ifscCode: form.ifscCode.trim(),
-        panNo: form.panNo.trim(),
-        uanNo: form.uanNo.trim(),
-        empCode: form.empCode.trim(),
+        accountHolderName: bankForm.accountHolderName.trim() || null,
+        accountNumber: bankForm.accountNumber.trim(),
+        bankName: bankForm.bankName.trim(),
+        branchName: bankForm.branchName.trim() || null,
+        ifscCode: bankForm.ifscCode.trim(),
+        panNo: bankForm.panNo.trim(),
+        uanNo: bankForm.uanNo.trim(),
+        empCode: bankForm.empCode.trim(),
       }),
     onSuccess: async () => {
-      setEditing(false);
-      setError(null);
+      setEditingBank(false);
+      setBankError(null);
       await qc.invalidateQueries({ queryKey });
     },
-    onError: (err) => setError(getApiError(err).message),
+    onError: (err) => setBankError(getApiError(err).message),
   });
 
   const maskedAcct = bank?.accountNumber
@@ -611,28 +661,156 @@ export function PrivateInfoTab({
       <SectionCard
         title="Personal details"
         icon={<UserRound className="h-4 w-4" strokeWidth={1.75} />}
+        action={
+          canEdit && !editingPersonal ? (
+            <button
+              type="button"
+              className="text-xs font-semibold text-[var(--color-accent)] hover:underline"
+              onClick={openPersonalEdit}
+            >
+              Edit
+            </button>
+          ) : null
+        }
       >
-        <dl>
-          <InfoRow label="Date of Birth" value={fmtDate(emp.dateOfBirth)} />
-          <InfoRow label="Residing Address" value={emp.residingAddress} />
-          <InfoRow label="Nationality" value={emp.nationality} />
-          <InfoRow label="Personal Email" value={emp.personalEmail} />
-          <InfoRow label="Gender" value={emp.gender} />
-          <InfoRow label="Marital Status" value={emp.maritalStatus} />
-          <InfoRow label="Date of Joining" value={fmtDate(emp.dateOfJoining)} />
-        </dl>
+        {personalError ? (
+          <p className="mb-2 text-sm text-[var(--color-danger)]">{personalError}</p>
+        ) : null}
+        {editingPersonal ? (
+          <form
+            className="space-y-3"
+            onSubmit={(e: FormEvent) => {
+              e.preventDefault();
+              savePersonal.mutate();
+            }}
+          >
+            <FormField
+              label="Phone"
+              name="phone"
+              type="tel"
+              value={personalForm.phone}
+              onChange={(e) => setPersonalForm((f) => ({ ...f, phone: e.target.value }))}
+              placeholder="+91-98765-43210"
+            />
+            <TextAreaField
+              label="Residing address"
+              name="residingAddress"
+              rows={3}
+              value={personalForm.residingAddress}
+              onChange={(e) =>
+                setPersonalForm((f) => ({ ...f, residingAddress: e.target.value }))
+              }
+            />
+            <FormField
+              label="Personal email"
+              name="personalEmail"
+              type="email"
+              value={personalForm.personalEmail}
+              onChange={(e) =>
+                setPersonalForm((f) => ({ ...f, personalEmail: e.target.value }))
+              }
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FormField
+                label="Date of birth"
+                name="dateOfBirth"
+                type="date"
+                value={personalForm.dateOfBirth}
+                onChange={(e) =>
+                  setPersonalForm((f) => ({ ...f, dateOfBirth: e.target.value }))
+                }
+              />
+              <FormField
+                label="Nationality"
+                name="nationality"
+                value={personalForm.nationality}
+                onChange={(e) =>
+                  setPersonalForm((f) => ({ ...f, nationality: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                  Gender
+                </label>
+                <select
+                  className="df-input w-full py-2"
+                  value={personalForm.gender}
+                  onChange={(e) => setPersonalForm((f) => ({ ...f, gender: e.target.value }))}
+                >
+                  <option value="">—</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                  <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                  Marital status
+                </label>
+                <select
+                  className="df-input w-full py-2"
+                  value={personalForm.maritalStatus}
+                  onChange={(e) =>
+                    setPersonalForm((f) => ({ ...f, maritalStatus: e.target.value }))
+                  }
+                >
+                  <option value="">—</option>
+                  <option value="SINGLE">Single</option>
+                  <option value="MARRIED">Married</option>
+                  <option value="DIVORCED">Divorced</option>
+                  <option value="WIDOWED">Widowed</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-xs text-[var(--color-muted)]">
+              Work email and date of joining are managed by HR and cannot be changed here. Use the
+              camera on your profile photo to update your picture.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="df-btn border border-[var(--color-border)]"
+                onClick={() => setEditingPersonal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savePersonal.isPending}
+                className="df-btn df-btn-primary disabled:opacity-50"
+              >
+                {savePersonal.isPending ? "Saving…" : "Save personal details"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <dl>
+            <InfoRow label="Phone" value={emp.phone} />
+            <InfoRow label="Date of Birth" value={fmtDate(emp.dateOfBirth)} />
+            <InfoRow label="Residing Address" value={emp.residingAddress} />
+            <InfoRow label="Nationality" value={emp.nationality} />
+            <InfoRow label="Personal Email" value={emp.personalEmail} />
+            <InfoRow label="Gender" value={emp.gender} />
+            <InfoRow label="Marital Status" value={emp.maritalStatus} />
+            <InfoRow label="Date of Joining" value={fmtDate(emp.dateOfJoining)} />
+          </dl>
+        )}
       </SectionCard>
 
       <SectionCard
         title="Bank details"
         icon={<Landmark className="h-4 w-4" strokeWidth={1.75} />}
         action={
-          canEdit && !editing ? (
+          canEdit && !editingBank ? (
             <button
               type="button"
               className="text-xs font-semibold text-[var(--color-accent)] hover:underline"
               onClick={() => {
-                setForm({
+                setBankForm({
                   accountHolderName: bank?.accountHolderName ?? "",
                   accountNumber: bank?.accountNumber ?? "",
                   bankName: bank?.bankName ?? "",
@@ -642,7 +820,8 @@ export function PrivateInfoTab({
                   uanNo: bank?.uanNo ?? "",
                   empCode: bank?.empCode ?? "",
                 });
-                setEditing(true);
+                setBankError(null);
+                setEditingBank(true);
               }}
             >
               {bank ? "Edit" : "Add"}
@@ -650,8 +829,8 @@ export function PrivateInfoTab({
           ) : null
         }
       >
-        {error ? <p className="mb-2 text-sm text-[var(--color-danger)]">{error}</p> : null}
-        {editing ? (
+        {bankError ? <p className="mb-2 text-sm text-[var(--color-danger)]">{bankError}</p> : null}
+        {editingBank ? (
           <form
             className="space-y-3"
             onSubmit={(e) => {
@@ -662,66 +841,66 @@ export function PrivateInfoTab({
             <FormField
               label="Account holder name"
               name="accountHolderName"
-              value={form.accountHolderName}
-              onChange={(e) => setForm((f) => ({ ...f, accountHolderName: e.target.value }))}
+              value={bankForm.accountHolderName}
+              onChange={(e) => setBankForm((f) => ({ ...f, accountHolderName: e.target.value }))}
             />
             <FormField
               label="Account number"
               name="accountNumber"
-              value={form.accountNumber}
-              onChange={(e) => setForm((f) => ({ ...f, accountNumber: e.target.value }))}
+              value={bankForm.accountNumber}
+              onChange={(e) => setBankForm((f) => ({ ...f, accountNumber: e.target.value }))}
               required
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <FormField
                 label="Bank name"
                 name="bankName"
-                value={form.bankName}
-                onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
+                value={bankForm.bankName}
+                onChange={(e) => setBankForm((f) => ({ ...f, bankName: e.target.value }))}
                 required
               />
               <FormField
                 label="Branch"
                 name="branchName"
-                value={form.branchName}
-                onChange={(e) => setForm((f) => ({ ...f, branchName: e.target.value }))}
+                value={bankForm.branchName}
+                onChange={(e) => setBankForm((f) => ({ ...f, branchName: e.target.value }))}
               />
             </div>
             <FormField
               label="IFSC code"
               name="ifscCode"
-              value={form.ifscCode}
-              onChange={(e) => setForm((f) => ({ ...f, ifscCode: e.target.value }))}
+              value={bankForm.ifscCode}
+              onChange={(e) => setBankForm((f) => ({ ...f, ifscCode: e.target.value }))}
               required
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <FormField
                 label="PAN"
                 name="panNo"
-                value={form.panNo}
-                onChange={(e) => setForm((f) => ({ ...f, panNo: e.target.value }))}
+                value={bankForm.panNo}
+                onChange={(e) => setBankForm((f) => ({ ...f, panNo: e.target.value }))}
                 required
               />
               <FormField
                 label="UAN"
                 name="uanNo"
-                value={form.uanNo}
-                onChange={(e) => setForm((f) => ({ ...f, uanNo: e.target.value }))}
+                value={bankForm.uanNo}
+                onChange={(e) => setBankForm((f) => ({ ...f, uanNo: e.target.value }))}
                 required
               />
             </div>
             <FormField
               label="Employee code"
               name="empCode"
-              value={form.empCode}
-              onChange={(e) => setForm((f) => ({ ...f, empCode: e.target.value }))}
+              value={bankForm.empCode}
+              onChange={(e) => setBankForm((f) => ({ ...f, empCode: e.target.value }))}
               required
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 className="df-btn border border-[var(--color-border)]"
-                onClick={() => setEditing(false)}
+                onClick={() => setEditingBank(false)}
               >
                 Cancel
               </button>
@@ -752,3 +931,4 @@ export function PrivateInfoTab({
     </div>
   );
 }
+

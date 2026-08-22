@@ -64,8 +64,30 @@ See `.env.example`. Important variables:
 | `JWT_ACCESS_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | Token lifetimes |
 | `UPLOAD_DIR` | Local upload root (default `uploads`) |
 | `APP_URL` | Frontend URL (links in emails / tokens) |
-| `SMTP_*` | Optional email; if unset, tokens may be logged |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Real email. Empty `SMTP_HOST` = log-only stub |
+| `EMAIL_FROM` | From header for outbound mail |
+| `APP_URL` | Frontend URL (links in verify / reset / welcome emails) |
 | **`DEMO_TODAY`** | Optional `YYYY-MM-DD` (UTC). Overrides “today” for check-in / presence. Empty = real date. Use a weekday for weekend demos. |
+
+### Email setup
+
+1. Leave `SMTP_HOST` blank for local/dev — messages print as `[email:log]` in the backend console.
+2. For real delivery (Gmail example):
+   - Google Account → Security → 2-Step Verification → App passwords
+   - Create an app password for “Mail”
+   - Set in `backend/.env`:
+
+```ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASS=xxxx-xxxx-xxxx-xxxx
+EMAIL_FROM=Dayflow <you@gmail.com>
+APP_URL=http://localhost:5173
+```
+
+3. Restart `npm run dev` in backend.
+4. Trigger a flow: company signup (verify email), create employee (welcome + temp password), leave approve/reject (alert), or Forgot password on `/forgot-password`.
 
 `DEMO_TODAY` is read in `todayUtcDate()` (attendance + employee presence). Keep frontend `VITE_DEMO_TODAY` in sync.
 

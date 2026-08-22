@@ -86,4 +86,15 @@ export const authApi = {
   verifyEmail(token: string) {
     return api.post("/auth/verify-email", { token });
   },
+
+  forgotPassword(email: string) {
+    return api.post<{ success: true; data: { sent: boolean; resetToken?: string } }>(
+      "/auth/forgot-password",
+      { email },
+    );
+  },
+
+  resetPassword(token: string, newPassword: string) {
+    return api.post("/auth/reset-password", { token, newPassword });
+  },
 };

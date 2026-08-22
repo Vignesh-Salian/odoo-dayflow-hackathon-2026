@@ -3,6 +3,7 @@ import { Role, TokenType } from "@prisma/client";
 import { prisma } from "../../common/db/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
 import { env } from "../../common/config/env.js";
+import { mailTemplates, sendMail } from "../../common/email/mailer.js";
 import type { AuthUser } from "../../common/middleware/auth.js";
 import {
   generateOpaqueToken,
@@ -213,8 +214,16 @@ export const employeesService = {
     console.info(
       `[employee-created] loginId=${created.user.loginId} email=${created.user.email} tempPassword=${tempPassword}`,
     );
-    console.info(
-      `[email-verify] ${env.APP_URL}/verify-email?token=${verifyToken} → ${created.user.email}`,
+
+    void sendMail(
+      mailTemplates.employeeWelcome({
+        to: created.user.email,
+        firstName: created.employee.firstName,
+        companyName: company.name,
+        loginId: created.user.loginId,
+        tempPassword,
+        verifyToken,
+      }),
     );
 
     const full = await employeesRepository.findById(created.employee.id);

@@ -174,7 +174,7 @@ Full list: [DEMO_CREDENTIALS.md](DEMO_CREDENTIALS.md).
 - **Company salary policy** — ADMIN configures component rules & statutory rates  
 - **Salary structures** — wage → Basic / HRA / allowances → PF / PT → net  
 - **Payslips** — generate by month; authenticated PDF download  
-- **Light / dark theme** — app-wide theme toggle  
+- **Email delivery** — SMTP via Nodemailer when `SMTP_HOST` is set; otherwise console `[email:log]`. Covers verify, password reset, employee welcome, and notification alerts. 
 
 ---
 

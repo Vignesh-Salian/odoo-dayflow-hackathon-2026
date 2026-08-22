@@ -67,6 +67,14 @@ export function LoginPage() {
         error={fields.password}
         required
       />
+      <p className="text-right text-sm">
+        <Link
+          className="font-bold text-[#2563eb] hover:underline dark:text-[#60a5fa]"
+          to="/forgot-password"
+        >
+          Forgot password?
+        </Link>
+      </p>
       {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
       <button
         type="submit"

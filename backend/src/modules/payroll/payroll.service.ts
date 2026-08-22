@@ -9,6 +9,7 @@ import type { AuthUser } from "../../common/middleware/auth.js";
 import type {
   GeneratePayslipsInput,
   MyPayslipsQuery,
+  PutCompanySalaryPolicyInput,
   PutSalaryStructureInput,
 } from "./payroll.schema.js";
 import { payrollRepository } from "./payroll.repository.js";
@@ -181,7 +182,15 @@ export const payrollService = {
     if (actor.role !== Role.ADMIN) {
       throw new AppError(403, "FORBIDDEN", "Only ADMIN can edit company salary policies");
     }
-    return payrollRepository.upsertCompanySalaryPolicy(actor.companyId, input);
+    return payrollRepository.upsertCompanySalaryPolicy(actor.companyId, {
+      ...input,
+      components: input.components.map((c) => ({
+        name: c.name,
+        computationType: c.computationType,
+        value: c.value ?? null,
+        sequence: c.sequence,
+      })),
+    });
   },
 
   async getSalaryStructure(actor: AuthUser, employeeId: string) {

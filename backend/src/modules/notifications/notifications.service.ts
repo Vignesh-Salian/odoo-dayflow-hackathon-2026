@@ -1,8 +1,11 @@
 /**
  * OWNER: Prajwal (Person D)
  * Notification centre service (Build Plan §7).
+ * Creates in-app alerts and emails the user when SMTP is configured.
  */
+import { prisma } from "../../common/db/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
+import { mailTemplates, sendMail } from "../../common/email/mailer.js";
 import { notificationsRepository } from "./notifications.repository.js";
 
 export const notificationsService = {
@@ -15,6 +18,27 @@ export const notificationsService = {
     relatedId?: string | null;
   }) {
     const row = await notificationsRepository.create(data);
+
+    void (async () => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: data.userId },
+          select: { email: true },
+        });
+        if (user?.email) {
+          await sendMail(
+            mailTemplates.notificationAlert({
+              to: user.email,
+              title: data.title,
+              message: data.message,
+            }),
+          );
+        }
+      } catch (err) {
+        console.error("[notification-email]", err);
+      }
+    })();
+
     return {
       id: row.id,
       userId: row.userId,
