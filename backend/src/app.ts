@@ -13,6 +13,8 @@ import { timeoffRouter } from "./modules/timeoff/timeoff.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { employeesRouter } from "./modules/employees/employees.routes.js";
 import { payrollRouter } from "./modules/payroll/payroll.routes.js";
+import { auditRouter } from "./modules/audit/audit.routes.js";
+import rateLimit from "express-rate-limit";
 
 export function createApp() {
   const app = express();
@@ -29,6 +31,15 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
   app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
+
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      max: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
 
   app.get("/health", (_req, res) => {
     res.json({ success: true, data: { status: "ok" }, error: null });
@@ -47,6 +58,9 @@ export function createApp() {
   // Person B — employees + payroll
   app.use("/api/v1/employees", employeesRouter);
   app.use("/api/v1/payroll", payrollRouter);
+
+  // Phase 7 — audit log (ADMIN)
+  app.use("/api/v1/audit-logs", auditRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -4,145 +4,112 @@
 
 | Person | Name | Owns |
 |--------|------|------|
-| **A** | **Prasanna** | DB schema, migrations, Auth (login-id, JWT, RBAC), shared backend common |
-| **B** | **Nidhish** | Employees / Profile + Salary engine + Payslip PDF |
-| **C** | **Vignesh** | Attendance + Socket.io presence + Analytics |
-| **D** | **Prajwal** | Time-off + shared UI design system + Notifications |
+| **A** | **Prasanna** | Auth, Prisma schema, common middleware, **seed**, **audit logs**, README/demo docs |
+| **B** | **Nidhish** | Employees / Profile + Salary engine + Payslip PDF + **payroll tests** |
+| **C** | **Vignesh** | Attendance + Socket.io presence + Analytics + **presence/analytics tests** |
+| **D** | **Prajwal** | Time-off + Notifications + shared UI + **ER diagram / EmptyState / LoadingState** |
 
 ## Branches
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | **Demo / hourly commits.** Prasanna’s files are complete. B/C/D files are **placeholders** (TODO headers). Each person commits into *their* files every hour. |
-| `reference/copy-from-here` | **Full working code** for B/C/D (and A). Teammates open this branch, copy a file’s contents, paste into the same path on `main`. |
+| `main` | Hourly commits. **Prasanna’s files are complete.** B/C/D Phase-7 (and any unfinished) files may be **placeholders**. |
+| `reference/copy-from-here` | **Full working code** for everyone. Copy a file from this branch → paste into the **same path** on `main` → commit with **your** git user. |
 
 ### How to copy (B / C / D)
 
 ```bash
 git fetch
 git show reference/copy-from-here:path/to/file.ts > path/to/file.ts
-# or open the file on GitHub on that branch and copy-paste
-```
-
-Then commit on your feature branch / `main` with your own git user:
-
-```bash
 git add path/to/file.ts
-git commit -m "feat(module): implement <what you added>"
+git commit -m "feat(module): implement <what>"
 git push
 ```
 
+**Rules**
+- Commit **only files you own** (tables below).
+- Do **not** edit someone else’s filled files on `main`.
+- Do **not** change `backend/src/app.ts` unless you are Prasanna (router mounts / rate-limit).
+
 ---
 
-## Person A — Prasanna (filled on `main`)
+## Phase 0–6 module ownership (existing)
 
-### Backend
-- `backend/prisma/schema.prisma`
-- `backend/prisma/migrations/**`
-- `backend/prisma/seed.ts`
-- `backend/package.json`, `backend/tsconfig.json`, `backend/.env.example`, `backend/.gitignore`
-- `backend/src/server.ts`
-- `backend/src/app.ts` *(wires routers — leave mount lines for B/C/D)*
-- `backend/src/common/**` *(config, db, errors, middleware, utils)*
+### Person A — Prasanna
+- `backend/prisma/schema.prisma`, `migrations/**`
+- `backend/src/common/**` (except `common/socket` → Vignesh)
 - `backend/src/modules/auth/**`
-
-### Frontend
-- `frontend/src/api/client.ts`
-- `frontend/src/api/auth.ts`
+- `backend/src/server.ts`
+- `backend/src/app.ts`
+- `frontend/src/api/client.ts`, `frontend/src/api/auth.ts`
 - `frontend/src/features/auth/**`
 - `frontend/src/routes/guards.tsx`
-- `frontend/src/main.tsx`
-- `docker-compose.yml`
+
+### Person B — Nidhish
+- `backend/src/modules/employees/**`
+- `backend/src/modules/payroll/**` (except see Phase 7 test files — still B)
+- `frontend/src/api/employees.ts`, `frontend/src/api/payroll.ts`
+- `frontend/src/features/employees/**`
+- `frontend/src/features/payroll/**`
+
+### Person C — Vignesh
+- `backend/src/common/socket/**`
+- `backend/src/modules/attendance/**`
+- `backend/src/modules/analytics/**`
+- `frontend/src/api/attendance.ts`, `frontend/src/api/analytics.ts`
+- `frontend/src/features/attendance/**`
+- `frontend/src/features/analytics/**`
+
+### Person D — Prajwal
+- `backend/src/modules/timeoff/**`
+- `backend/src/modules/notifications/**`
+- `frontend/src/api/timeoff.ts`, `frontend/src/api/notifications.ts`
+- `frontend/src/features/timeoff/**`
+- `frontend/src/components/NavBar.tsx`, `FormField.tsx`, `Modal.tsx`, `DataTable.tsx`, `TabsPanel.tsx`, `StatCard.tsx`, `Calendar.tsx`, `ApprovalButtons.tsx`
+- `frontend/src/index.css`
 
 ---
 
-## Person B — Nidhish
+## Phase 7 ownership (no overlapping files)
 
-### Backend
-- `backend/src/modules/employees/employees.routes.ts`
-- `backend/src/modules/employees/employees.controller.ts`
-- `backend/src/modules/employees/employees.service.ts`
-- `backend/src/modules/employees/employees.repository.ts`
-- `backend/src/modules/employees/employees.schema.ts`
-- `backend/src/modules/payroll/payroll.routes.ts`
-- `backend/src/modules/payroll/payroll.controller.ts`
-- `backend/src/modules/payroll/payroll.service.ts`
-- `backend/src/modules/payroll/payroll.repository.ts`
-- `backend/src/modules/payroll/payroll.schema.ts`
-- `backend/src/modules/payroll/salaryEngine.ts`
-- `backend/src/modules/payroll/payslipPdf.ts`
+### Person A — Prasanna (**largest share — already filled on `main`**)
+| File | What |
+|------|------|
+| `backend/prisma/seed.ts` | Full demo seed (Odoo India, 10 users, attendance, leaves, payslip) |
+| `backend/src/modules/audit/audit.routes.ts` | `GET /api/v1/audit-logs` (ADMIN) |
+| `backend/src/modules/auth/companyCode.test.ts` | Company-code unit tests |
+| `backend/src/app.ts` | Rate-limit + audit router mount |
+| `backend/package.json` | `seed` / `test` scripts |
+| `README.md` | Runbook |
+| `DEMO_CREDENTIALS.md` | Demo logins |
 
-### Frontend
-- `frontend/src/api/employees.ts`
-- `frontend/src/api/payroll.ts`
-- `frontend/src/features/employees/EmployeesPage.tsx`
-- `frontend/src/features/employees/EmployeeProfilePage.tsx`
-- `frontend/src/features/employees/MyProfilePage.tsx`
-- `frontend/src/features/employees/EmployeeCard.tsx`
-- `frontend/src/features/payroll/PayrollPage.tsx`
+### Person B — Nidhish (copy from reference)
+| File | What |
+|------|------|
+| `backend/src/modules/payroll/salaryEngine.test.ts` | Salary engine unit tests (§5.3) |
+| `backend/src/modules/payroll/payrollMath.test.ts` | Payable-day / LOP maths (§5.4) |
+| `backend/src/modules/payroll/payslipPdf.ts` | Payslip PDF/text renderer |
 
----
+### Person C — Vignesh (copy from reference)
+| File | What |
+|------|------|
+| `backend/src/modules/attendance/presence.test.ts` | Presence status rules (§5.5) |
+| `backend/src/modules/analytics/analyticsSummary.test.ts` | Dashboard summary helper tests |
 
-## Person C — Vignesh
-
-### Backend
-- `backend/src/modules/attendance/attendance.routes.ts`
-- `backend/src/modules/attendance/attendance.controller.ts`
-- `backend/src/modules/attendance/attendance.service.ts`
-- `backend/src/modules/attendance/attendance.repository.ts`
-- `backend/src/modules/attendance/attendance.schema.ts`
-- `backend/src/modules/analytics/analytics.routes.ts`
-- `backend/src/modules/analytics/analytics.controller.ts`
-- `backend/src/modules/analytics/analytics.service.ts`
-- `backend/src/modules/analytics/analytics.repository.ts`
-- `backend/src/common/socket/index.ts`
-
-### Frontend
-- `frontend/src/api/attendance.ts`
-- `frontend/src/api/analytics.ts`
-- `frontend/src/features/attendance/AttendancePage.tsx`
-- `frontend/src/features/attendance/AttendanceAllPage.tsx`
-- `frontend/src/features/attendance/StatusDot.tsx`
-- `frontend/src/features/analytics/AnalyticsPage.tsx`
+### Person D — Prajwal (copy from reference)
+| File | What |
+|------|------|
+| `docs/ER_DIAGRAM.md` | Mermaid ER diagram for demo |
+| `frontend/src/components/EmptyState.tsx` | Empty-state UI |
+| `frontend/src/components/LoadingState.tsx` | Loading-state UI |
 
 ---
 
-## Person D — Prajwal
+## Demo credentials (after seed)
 
-### Backend
-- `backend/src/modules/timeoff/timeoff.routes.ts`
-- `backend/src/modules/timeoff/timeoff.controller.ts`
-- `backend/src/modules/timeoff/timeoff.service.ts`
-- `backend/src/modules/timeoff/timeoff.repository.ts`
-- `backend/src/modules/timeoff/timeoff.schema.ts`
-- `backend/src/modules/notifications/notifications.routes.ts`
-- `backend/src/modules/notifications/notifications.controller.ts`
-- `backend/src/modules/notifications/notifications.service.ts`
-- `backend/src/modules/notifications/notifications.repository.ts`
-- `backend/src/modules/notifications/notifications.schema.ts`
+```bash
+cd backend && npm run seed
+```
 
-### Frontend
-- `frontend/src/api/timeoff.ts`
-- `frontend/src/api/notifications.ts`
-- `frontend/src/features/timeoff/TimeOffPage.tsx`
-- `frontend/src/features/timeoff/TimeOffManagePage.tsx`
-- `frontend/src/components/DataTable.tsx`
-- `frontend/src/components/TabsPanel.tsx`
-- `frontend/src/components/Modal.tsx`
-- `frontend/src/components/StatCard.tsx`
-- `frontend/src/components/Calendar.tsx`
-- `frontend/src/components/ApprovalButtons.tsx`
-- `frontend/src/components/NavBar.tsx` *(shared shell — Prajwal polishes)*
-- `frontend/src/components/FormField.tsx` *(shared — Prajwal polishes)*
-- `frontend/src/index.css` *(design tokens — Prajwal owns look)*
-
----
-
-## Shared wiring (careful when merging)
-
-- `backend/src/app.ts` — Prasanna mounts routers; each person only edits **their** `app.use` line if needed.
-- `frontend/src/App.tsx` — route table; each person replaces their `PlaceholderPage` with their real page import.
-
-## Hourly commit tip
-
-Commit **only files you own**. Do not rewrite someone else’s filled files on `main`.
+Password for all seeded users: **`Demo@2026`**  
+Admin login ID: **`OIADLO20220001`** — see [DEMO_CREDENTIALS.md](DEMO_CREDENTIALS.md).

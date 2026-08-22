@@ -11,7 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "test": "node --import tsx --test src/modules/payroll/salaryEngine.test.ts src/modules/payroll/payrollMath.test.ts src/modules/auth/companyCode.test.ts src/modules/attendance/presence.test.ts src/modules/analytics/analyticsSummary.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
