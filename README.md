@@ -11,7 +11,7 @@
 
 ---
 
-## ??? Tech Stack & Architecture
+## Tech Stack & Architecture
 
 ```
 +---------------------------------------------------------+
@@ -34,7 +34,7 @@
 
 ---
 
-## ? Quick Start & Running Locally
+## Quick Start & Running Locally
 
 ### Prerequisites
 - Python 3.10+
@@ -65,20 +65,20 @@ npm install
 
 ---
 
-## ?? 4-DEVELOPER WORK DISTRIBUTION & TEAM INSTRUCTIONS
+## 4-DEVELOPER WORK DISTRIBUTION & TEAM INSTRUCTIONS
 
 ---
 
-### ?? DEVELOPER 1 — Backend Core, Database & Authentication
+### DEVELOPER 1 — Backend Core, Database & Authentication
 
-#### ?? Primary Ownership & Files
+#### Primary Ownership & Files
 * `backend/app/models/auth_models.py`
 * `backend/app/routes/auth.py`
 * `backend/app/routes/employees.py`
 * `backend/app/utils/security.py`
 * `backend/app/utils/errors.py`
 
-#### ?? Exact Tasks & Instructions
+#### Exact Tasks & Instructions
 1. **Database Schema**: Maintain SQLAlchemy models for `User` and `Employee` tables with PostgreSQL primary/foreign keys and unique constraints (`users.email UNIQUE`, `employees.employee_code UNIQUE`).
 2. **JWT Security**: Maintain JWT encoding, decoding, and password hashing in `security.py`. Expose `get_current_user` and `require_admin` security dependencies.
 3. **Authentication APIs**:
@@ -94,9 +94,9 @@ npm install
 
 ---
 
-### ?? DEVELOPER 2 — Frontend Core, Auth Shell & Dashboards
+### DEVELOPER 2 — Frontend Core, Auth Shell & Dashboards
 
-#### ?? Primary Ownership & Files
+#### Primary Ownership & Files
 * `frontend/src/context/AuthContext.jsx`
 * `frontend/src/pages/LoginPage.jsx`
 * `frontend/src/pages/DashboardPage.jsx`
@@ -104,7 +104,7 @@ npm install
 * `frontend/src/layouts/DashboardLayout.jsx`
 * `frontend/src/components/common/*` (`Navbar.jsx`, `Sidebar.jsx`, `Button.jsx`, `Card.jsx`, `Table.jsx`, `Modal.jsx`, `Input.jsx`, `StatCard.jsx`, `Badge.jsx`, `Alert.jsx`)
 
-#### ?? Exact Tasks & Instructions
+#### Exact Tasks & Instructions
 1. **Auth Context**: Manage global token storage in `localStorage`, user session state, and role checks (`isAdmin`).
 2. **Login View**: Maintain `LoginPage.jsx` with credential inputs and demo account quick-fill buttons (`Admin / HR` vs `Employee`).
 3. **Layout & Navigation**: Maintain `Navbar.jsx` (avatar, role badge, check-in widget, sign out) and `Sidebar.jsx` with tab navigation (`/dashboard`, `/employees`, `/attendance`, `/leave`, `/payroll`).
