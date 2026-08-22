@@ -1,7 +1,6 @@
 /**
  * OWNER: Prajwal (Person D)
- * PLACEHOLDER — Phase 8 year param. Copy from reference:
- *   git show reference/copy-from-here:frontend/src/api/timeoff.ts > frontend/src/api/timeoff.ts
+ * Time-off API client (Build Plan §7).
  */
 import { api } from "./client.ts";
 
@@ -38,26 +37,52 @@ export type LeaveRequest = {
   reason: string | null;
   attachmentUrl: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-  leaveType?: { id: string; name: string; code: string; isPaid: boolean; color: string | null; requiresAttachment: boolean };
+  approverId: string | null;
+  approverComment: string | null;
+  appliedAt: string;
+  decidedAt: string | null;
+  leaveType?: {
+    id: string;
+    name: string;
+    code: string;
+    isPaid: boolean;
+    color: string | null;
+    requiresAttachment: boolean;
+  };
   employee?: { id: string; firstName: string; lastName: string };
 };
 
-export type PublicHoliday = { id: string; date: string; name: string; year: number };
+export type PublicHoliday = {
+  id: string;
+  date: string;
+  name: string;
+  year: number;
+};
 
-type Paginated<T> = { items: T[]; page: number; limit: number; total: number };
+type Paginated<T> = {
+  items: T[];
+  page: number;
+  limit: number;
+  total: number;
+};
 
 export const timeoffApi = {
   leaveTypes() {
     return api.get<{ success: true; data: LeaveType[] }>("/leave-types");
   },
+
   myAllocations(year?: number) {
     return api.get<{ success: true; data: LeaveAllocation[] }>("/leave/allocations/me", {
       params: year ? { year } : undefined,
     });
   },
+
   listAllocations(params?: { year?: number; employeeId?: string; page?: number; limit?: number }) {
-    return api.get<{ success: true; data: Paginated<LeaveAllocation> }>("/leave/allocations", { params });
+    return api.get<{ success: true; data: Paginated<LeaveAllocation> }>("/leave/allocations", {
+      params,
+    });
   },
+
   createAllocation(payload: {
     employeeId: string;
     leaveTypeId: string;
@@ -66,6 +91,7 @@ export const timeoffApi = {
   }) {
     return api.post<{ success: true; data: LeaveAllocation }>("/leave/allocations", payload);
   },
+
   createRequest(payload: {
     leaveTypeId: string;
     startDate: string;
@@ -80,21 +106,35 @@ export const timeoffApi = {
     if (payload.reason) form.append("reason", payload.reason);
     if (payload.attachment) form.append("attachment", payload.attachment);
     return api.post<{ success: true; data: LeaveRequest }>("/leave/requests", form, {
+      // Let the browser set multipart boundary (do not force application/json)
       headers: { "Content-Type": undefined },
     });
   },
-  myRequests(_year?: number) {
-    return api.get<{ success: true; data: LeaveRequest[] }>("/leave/requests/me");
+
+  myRequests(year?: number) {
+    return api.get<{ success: true; data: LeaveRequest[] }>("/leave/requests/me", {
+      params: year ? { year } : undefined,
+    });
   },
+
   listRequests(params?: { status?: string; search?: string; page?: number; limit?: number }) {
-    return api.get<{ success: true; data: Paginated<LeaveRequest> }>("/leave/requests", { params });
+    return api.get<{ success: true; data: Paginated<LeaveRequest> }>("/leave/requests", {
+      params,
+    });
   },
+
   approve(id: string, comment?: string) {
-    return api.patch<{ success: true; data: LeaveRequest }>(`/leave/requests/${id}/approve`, { comment });
+    return api.patch<{ success: true; data: LeaveRequest }>(`/leave/requests/${id}/approve`, {
+      comment,
+    });
   },
+
   reject(id: string, comment?: string) {
-    return api.patch<{ success: true; data: LeaveRequest }>(`/leave/requests/${id}/reject`, { comment });
+    return api.patch<{ success: true; data: LeaveRequest }>(`/leave/requests/${id}/reject`, {
+      comment,
+    });
   },
+
   publicHolidays(year?: number) {
     return api.get<{ success: true; data: PublicHoliday[] }>("/public-holidays", {
       params: year ? { year } : undefined,
