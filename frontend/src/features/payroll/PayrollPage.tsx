@@ -3,8 +3,9 @@
  */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Banknote, FileText } from "lucide-react";
+import { Banknote, FileText, LoaderCircle } from "lucide-react";
 import { payrollApi } from "../../api/payroll.ts";
+import { getApiError } from "../../api/client.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { PaginationControls } from "../../components/PaginationControls.tsx";
 import { EmptyState } from "../../components/EmptyState.tsx";
@@ -24,6 +25,23 @@ type MyPayslipsData = {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 };
 
+async function openPayslipPdf(id: string) {
+  const res = await payrollApi.downloadPdf(id);
+  const blob = new Blob([res.data], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    // Popup blocked — fall back to download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `payslip-${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 export function PayrollPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -32,6 +50,8 @@ export function PayrollPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [page, setPage] = useState(1);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
 
   const mine = useQuery({
     queryKey: ["payslips-me", page],
@@ -52,6 +72,18 @@ export function PayrollPage() {
 
   const slips = mine.data?.items ?? [];
   const total = mine.data?.pagination.total ?? 0;
+
+  const handlePdf = async (s: PayslipRow) => {
+    setPdfError(null);
+    setOpeningId(s.id);
+    try {
+      await openPayslipPdf(s.id);
+    } catch (err) {
+      setPdfError(getApiError(err).message || "Could not open payslip PDF");
+    } finally {
+      setOpeningId(null);
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -100,6 +132,9 @@ export function PayrollPage() {
 
       <div className="space-y-3">
         <h2 className="font-semibold">My payslips</h2>
+        {pdfError ? (
+          <p className="df-card p-3 text-sm text-[var(--color-danger)]">{pdfError}</p>
+        ) : null}
         {mine.isLoading ? (
           <div className="space-y-2" role="status" aria-label="Loading payslips">
             {Array.from({ length: 4 }, (_, i) => (
@@ -128,13 +163,19 @@ export function PayrollPage() {
                   net {String(s.netPay)}
                 </span>
               </span>
-              <a
-                className="inline-flex items-center gap-1.5 font-medium text-[var(--color-accent)] hover:underline"
-                href={payrollApi.pdfUrl(s.id)}
+              <button
+                type="button"
+                disabled={openingId === s.id}
+                onClick={() => void handlePdf(s)}
+                className="inline-flex items-center gap-1.5 font-medium text-[var(--color-accent)] hover:underline disabled:opacity-60"
               >
-                <FileText className="h-4 w-4" strokeWidth={1.75} />
+                {openingId === s.id ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+                ) : (
+                  <FileText className="h-4 w-4" strokeWidth={1.75} />
+                )}
                 PDF
-              </a>
+              </button>
             </li>
           ))}
         </ul>

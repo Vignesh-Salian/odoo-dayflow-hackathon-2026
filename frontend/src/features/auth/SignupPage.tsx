@@ -64,12 +64,15 @@ export function SignupPage() {
       onSubmit={onSubmit}
       wide
       footer={
-        <>
+        <p className="text-center text-[var(--color-muted)]">
           Already have an account?{" "}
-          <Link className="font-semibold text-[var(--color-accent)] hover:underline" to="/login">
+          <Link
+            className="font-bold text-[#2563eb] hover:underline dark:text-[#60a5fa]"
+            to="/login"
+          >
             Sign in
           </Link>
-        </>
+        </p>
       }
     >
       <div className="grid gap-3 sm:grid-cols-2">

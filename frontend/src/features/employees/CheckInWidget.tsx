@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogIn, LogOut, Timer } from "lucide-react";
 import { attendanceApi } from "../../api/attendance.ts";
 import { getApiError } from "../../api/client.ts";
+import { todayKey as appTodayKey, todayMonthYear } from "../../utils/today.ts";
 
 function formatElapsed(ms: number) {
   const totalMin = Math.max(0, Math.floor(ms / 60000));
@@ -16,18 +17,17 @@ function formatElapsed(ms: number) {
 
 export function CheckInWidget() {
   const qc = useQueryClient();
-  const now = new Date();
+  const { month, year } = todayMonthYear();
   const [tick, setTick] = useState(() => Date.now());
   const [banner, setBanner] = useState<string | null>(null);
 
   const monthQ = useQuery({
-    queryKey: ["attendance", "me", now.getMonth() + 1, now.getFullYear()],
-    queryFn: async () =>
-      (await attendanceApi.me(now.getMonth() + 1, now.getFullYear())).data.data,
+    queryKey: ["attendance", "me", month, year],
+    queryFn: async () => (await attendanceApi.me(month, year)).data.data,
     refetchInterval: 60_000,
   });
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = appTodayKey();
   const todayRecord = useMemo(
     () => monthQ.data?.records.find((r) => r.date === todayKey) ?? null,
     [monthQ.data, todayKey],

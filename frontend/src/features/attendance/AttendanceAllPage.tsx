@@ -10,12 +10,9 @@ import { getApiError } from "../../api/client.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { StatusDot } from "./StatusDot.tsx";
 import { PaginationControls } from "../../components/PaginationControls.tsx";
+import { todayKey as appTodayKey } from "../../utils/today.ts";
 
 const PAGE_SIZE = 20;
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function shiftDate(isoDate: string, days: number) {
   const d = new Date(`${isoDate}T00:00:00.000Z`);
@@ -30,7 +27,7 @@ function formatTime(iso: string | null) {
 
 export function AttendanceAllPage() {
   const { user } = useAuth();
-  const [date, setDate] = useState(todayKey);
+  const [date, setDate] = useState(appTodayKey);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
@@ -112,7 +109,7 @@ export function AttendanceAllPage() {
           type="button"
           onClick={() => {
             setPage(1);
-            setDate(todayKey());
+            setDate(appTodayKey());
           }}
           className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)]"
         >

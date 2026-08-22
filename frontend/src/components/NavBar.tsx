@@ -27,6 +27,7 @@ import { notificationsApi } from "../api/notifications.ts";
 import { attendanceApi } from "../api/attendance.ts";
 import { Modal } from "./Modal.tsx";
 import { mediaUrl } from "../utils/format.ts";
+import { todayKey as appTodayKey, todayMonthYear } from "../utils/today.ts";
 
 type NavItem = {
   to: string;
@@ -87,15 +88,15 @@ export function NavBar({
 
   const unread = notifQ.data?.unreadCount ?? 0;
 
-  const now = new Date();
+  const now = todayMonthYear();
   const presenceQ = useQuery({
-    queryKey: ["attendance", "me", now.getMonth() + 1, now.getFullYear()],
+    queryKey: ["attendance", "me", now.month, now.year],
     enabled: !!user,
     queryFn: async () =>
-      (await attendanceApi.me(now.getMonth() + 1, now.getFullYear())).data.data,
+      (await attendanceApi.me(now.month, now.year)).data.data,
     refetchInterval: 60_000,
   });
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = appTodayKey();
   const todayRec = presenceQ.data?.records.find((r) => r.date === todayKey);
   const inOffice = !!todayRec?.checkIn && !todayRec?.checkOut;
 

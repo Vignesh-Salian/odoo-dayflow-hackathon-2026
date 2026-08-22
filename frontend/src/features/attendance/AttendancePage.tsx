@@ -9,6 +9,7 @@ import { attendanceApi } from "../../api/attendance.ts";
 import { getApiError } from "../../api/client.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { StatusDot } from "./StatusDot.tsx";
+import { todayKey as appTodayKey, todayMonthYear } from "../../utils/today.ts";
 
 function monthLabel(month: number, year: number) {
   return new Date(Date.UTC(year, month - 1, 1)).toLocaleString(undefined, {
@@ -26,9 +27,9 @@ function formatTime(iso: string | null) {
 export function AttendancePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const appToday = todayMonthYear();
+  const [month, setMonth] = useState(appToday.month);
+  const [year, setYear] = useState(appToday.year);
   const [banner, setBanner] = useState<string | null>(null);
   const [regOpen, setRegOpen] = useState(false);
   const [regForm, setRegForm] = useState({
@@ -86,7 +87,7 @@ export function AttendancePage() {
   });
 
   const todayRecord = useMemo(() => {
-    const key = new Date().toISOString().slice(0, 10);
+    const key = appTodayKey();
     return data?.records.find((r) => r.date === key) ?? null;
   }, [data]);
 

@@ -37,10 +37,10 @@ export function LoginPage() {
       subtitle="Use your login ID or email to continue."
       onSubmit={onSubmit}
       footer={
-        <p className="text-center">
+        <p className="text-center text-[var(--color-muted)]">
           New company?{" "}
           <Link
-            className="ml-1 inline-flex cursor-pointer items-center rounded-lg bg-[var(--color-accent)] px-2.5 py-1 font-semibold !text-white shadow-sm transition hover:bg-[var(--color-accent-hover)] hover:!text-white"
+            className="font-bold text-[#2563eb] hover:underline dark:text-[#60a5fa]"
             to="/signup"
           >
             Create a company

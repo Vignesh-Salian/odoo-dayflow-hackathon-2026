@@ -22,8 +22,9 @@ export const payrollApi = {
   myPayslips(params?: { page?: number; limit?: number }) {
     return api.get("/payroll/payslips/me", { params });
   },
-  pdfUrl(id: string) {
-    return `/api/v1/payroll/payslips/${id}/pdf`;
+  /** Authenticated PDF fetch — plain href misses the Bearer token. */
+  downloadPdf(id: string) {
+    return api.get(`/payroll/payslips/${id}/pdf`, { responseType: "blob" });
   },
 };
 
