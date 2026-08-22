@@ -19,7 +19,7 @@ Dayflow is a full-stack HRMS that helps a company manage people, presence, leave
 | **Attendance** | Check-in / check-out, monthly calendar, company day view, regularizations |
 | **Time off** | Leave balances, requests, manager approvals |
 | **Payroll** | Company salary policy, per-employee wage structures, payslip PDFs |
-| **Analytics** | Attendance / workforce summaries for Admin & HR |
+| **Analytics** | Attendance / workforce  summaries for Admin & HR |
 | **Governance** | Notifications, company settings, admin audit log |
 
 Roles: **ADMIN**, **HR**, **EMPLOYEE** — each sees a tailored home and nav.
