@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { LoaderCircle } from "lucide-react";
 import { useAuth } from "../features/auth/AuthContext.tsx";
 import type { AuthUser } from "../api/auth.ts";
 
@@ -15,17 +16,20 @@ export function HomeRedirect() {
   return <Navigate to={homePathFor(user)} replace />;
 }
 
+function AuthBoot() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-sm text-[var(--color-muted)]">
+      <LoaderCircle className="h-7 w-7 animate-spin text-[var(--color-accent)]" strokeWidth={1.75} />
+      Loading…
+    </div>
+  );
+}
+
 export function RequireAuth() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--color-muted)]">
-        Loading…
-      </div>
-    );
-  }
+  if (isLoading) return <AuthBoot />;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
@@ -41,13 +45,7 @@ export function RequireAuth() {
 export function GuestOnly() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--color-muted)]">
-        Loading…
-      </div>
-    );
-  }
+  if (isLoading) return <AuthBoot />;
 
   if (isAuthenticated) {
     return <Navigate to={homePathFor(user)} replace />;

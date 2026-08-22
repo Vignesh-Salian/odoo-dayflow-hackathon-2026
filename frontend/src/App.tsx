@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./features/auth/AuthContext.tsx";
+import { ThemeProvider } from "./features/theme/ThemeContext.tsx";
 import { LoginPage } from "./features/auth/LoginPage.tsx";
 import { SignupPage } from "./features/auth/SignupPage.tsx";
 import { ChangePasswordPage } from "./features/auth/ChangePasswordPage.tsx";
@@ -34,9 +35,10 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
             <Route element={<GuestOnly />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
@@ -61,10 +63,11 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<HomeRedirect />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+              <Route path="*" element={<HomeRedirect />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

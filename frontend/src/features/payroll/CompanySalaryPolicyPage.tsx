@@ -1,9 +1,9 @@
 ﻿/**
- * Company Salary Policy Configuration & Live Preview UI.
- * Allows Company Admin to configure company-specific salary rules & rates.
+ * Company Salary Policy — configure rules & live preview (ADMIN).
  */
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BadgeCheck, CircleAlert, Wallet } from "lucide-react";
 import { payrollApi } from "../../api/payroll.ts";
 import { getApiError } from "../../api/client.ts";
 import { formatMoney } from "../../utils/format.ts";
@@ -53,12 +53,12 @@ export function CompanySalaryPolicyPage() {
       setPt(String(policyQuery.data.professionalTax ?? 200));
       if (policyQuery.data.components && policyQuery.data.components.length > 0) {
         setComponents(
-          policyQuery.data.components.map((c: any) => ({
+          policyQuery.data.components.map((c: PolicyComponent & { value?: number | string | null }) => ({
             name: c.name,
             computationType: c.computationType,
             value: c.value != null ? Number(c.value) : null,
             sequence: c.sequence,
-          }))
+          })),
         );
       }
     }
@@ -72,7 +72,7 @@ export function CompanySalaryPolicyPage() {
     });
   };
 
-  const updateComponentType = (index: number, type: any) => {
+  const updateComponentType = (index: number, type: PolicyComponent["computationType"]) => {
     setComponents((prev) => {
       const copy = [...prev];
       copy[index] = {
@@ -84,7 +84,6 @@ export function CompanySalaryPolicyPage() {
     });
   };
 
-  // Real-time Live Salary Engine Preview for sample wage
   const W = Number(sampleWage) || 0;
   const computedPreview = useMemo(() => {
     if (W <= 0) return [];
@@ -160,45 +159,63 @@ export function CompanySalaryPolicyPage() {
   if (policyQuery.isLoading) return <LoadingState label="Loading company salary policy…" />;
 
   return (
-    <div className="space-y-8">
+    <section className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-[var(--color-text)]">Company Salary Policy</h1>
-        <p className="text-sm text-[var(--color-muted)] mt-1">
-          Configure company-wide salary calculation rules, allowance percentages, and statutory deduction rates.
+        <div className="mb-1 flex items-center gap-2 text-[var(--color-accent)]">
+          <Wallet className="h-5 w-5" strokeWidth={1.75} />
+          <span className="text-xs font-semibold uppercase tracking-[0.14em]">Payroll</span>
+        </div>
+        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--color-text)]">
+          Company Salary Policy
+        </h1>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Configure company-wide calculation rules, allowance percentages, and statutory deduction rates.
         </p>
       </div>
 
       {saveSuccess ? (
-        <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-3.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800">
-          ✓ Company Salary Policy updated successfully! Future salary structures will calculate using these rules.
+        <div className="df-card flex items-start gap-3 border-emerald-300/60 bg-emerald-500/10 p-4 text-sm text-emerald-800 dark:border-emerald-800 dark:text-emerald-200">
+          <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+          <p>
+            Company salary policy updated. Future salary structures will calculate using these rules.
+          </p>
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-md bg-rose-50 dark:bg-rose-950/40 p-3.5 text-sm font-semibold text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800">
-          ⚠ {error}
+        <div className="df-card flex items-start gap-3 border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-4 text-sm text-[var(--color-danger)]">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+          <p>{error}</p>
         </div>
       ) : null}
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        {/* Left 7 cols: Policy Editor */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
-            <h2 className="text-base font-semibold text-[var(--color-text)]">1. Component Calculation Rules</h2>
-            <div className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-7">
+          <div className="df-card space-y-4 p-5">
+            <h2 className="text-base font-semibold text-[var(--color-text)]">
+              1. Component calculation rules
+            </h2>
+            <div className="space-y-3">
               {components.map((comp, idx) => (
-                <div key={comp.name} className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3.5 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <p className="font-semibold text-sm">{comp.name}</p>
-                    <span className="text-xs text-[var(--color-muted)] font-mono">Seq {comp.sequence}</span>
+                <div
+                  key={comp.name}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3.5 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">{comp.name}</p>
+                    <span className="text-xs font-mono text-[var(--color-muted)]">Seq {comp.sequence}</span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">Calculation Type</label>
+                      <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                        Calculation type
+                      </label>
                       <select
                         disabled={comp.computationType === "BALANCE"}
                         value={comp.computationType}
-                        onChange={(e) => updateComponentType(idx, e.target.value)}
-                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm"
+                        onChange={(e) =>
+                          updateComponentType(idx, e.target.value as PolicyComponent["computationType"])
+                        }
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm"
                       >
                         <option value="PERCENT_OF_WAGE">% of Monthly Wage</option>
                         <option value="PERCENT_OF_BASIC">% of Basic Salary</option>
@@ -208,7 +225,7 @@ export function CompanySalaryPolicyPage() {
                     </div>
                     {comp.computationType !== "BALANCE" ? (
                       <div>
-                        <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                        <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
                           {comp.computationType.startsWith("PERCENT") ? "Percentage (%)" : "Fixed Amount (INR)"}
                         </label>
                         <input
@@ -216,12 +233,12 @@ export function CompanySalaryPolicyPage() {
                           step={comp.computationType.startsWith("PERCENT") ? "0.1" : "1"}
                           value={comp.value ?? ""}
                           onChange={(e) => updateComponentValue(idx, e.target.value)}
-                          className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm"
                         />
                       </div>
                     ) : (
-                      <div className="flex items-center text-xs text-[var(--color-muted)] italic pt-5">
-                        Absorbs remainder (Wage - other components)
+                      <div className="flex items-center pt-5 text-xs italic text-[var(--color-muted)]">
+                        Absorbs remainder (Wage − other components)
                       </div>
                     )}
                   </div>
@@ -230,8 +247,10 @@ export function CompanySalaryPolicyPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
-            <h2 className="text-base font-semibold text-[var(--color-text)]">2. Statutory Deductions Policy</h2>
+          <div className="df-card space-y-4 p-5">
+            <h2 className="text-base font-semibold text-[var(--color-text)]">
+              2. Statutory deductions
+            </h2>
             <div className="grid gap-4 sm:grid-cols-3">
               <FormField
                 label="Employee PF Rate (%)"
@@ -266,28 +285,27 @@ export function CompanySalaryPolicyPage() {
             type="button"
             disabled={saveMutation.isPending || exceeds}
             onClick={() => saveMutation.mutate()}
-            className="rounded-md bg-[var(--color-accent)] px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="df-btn df-btn-primary disabled:opacity-50"
           >
-            {saveMutation.isPending ? "Saving Policy…" : "Save Company Salary Policy"}
+            {saveMutation.isPending ? "Saving policy…" : "Save company salary policy"}
           </button>
         </div>
 
-        {/* Right 5 cols: Live Policy Impact Preview */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="sticky top-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-[var(--color-text)]">Live Policy Impact Preview</h2>
-              <span className="rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 text-xs font-bold px-2 py-0.5">
-                Real-Time
+        <div className="lg:col-span-5">
+          <div className="df-card sticky top-6 space-y-4 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-[var(--color-text)]">Live policy preview</h2>
+              <span className="rounded-lg bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                Real-time
               </span>
             </div>
 
             <p className="text-xs text-[var(--color-muted)]">
-              Enter a sample employee monthly wage to preview how your company policy calculates earnings, deductions, and net salary.
+              Enter a sample monthly wage to preview earnings, deductions, and net take-home under this policy.
             </p>
 
             <FormField
-              label="Sample Employee Monthly Wage (INR)"
+              label="Sample monthly wage (INR)"
               name="sampleWage"
               type="number"
               value={sampleWage}
@@ -295,58 +313,69 @@ export function CompanySalaryPolicyPage() {
             />
 
             {exceeds ? (
-              <p className="text-xs font-semibold text-rose-600">
-                ⚠ Warning: Non-balance components exceed monthly wage. Reduce percentages/amounts.
+              <p className="flex items-start gap-2 text-xs font-medium text-[var(--color-danger)]">
+                <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                Non-balance components exceed monthly wage. Reduce percentages or amounts.
               </p>
             ) : null}
 
             {computedPreview.length > 0 ? (
-              <div className="space-y-3">
-                <div className="overflow-x-auto rounded-md border border-[var(--color-border)] text-xs">
-                  <table className="w-full text-left">
-                    <thead className="bg-[var(--color-bg)] text-[var(--color-muted)] font-semibold">
-                      <tr>
-                        <th className="px-3 py-2">Component</th>
-                        <th className="px-3 py-2">Policy Rule</th>
-                        <th className="px-3 py-2 text-right">Amount</th>
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] text-xs">
+                <table className="w-full text-left">
+                  <thead className="bg-[var(--color-bg)] text-[var(--color-muted)]">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">Component</th>
+                      <th className="px-3 py-2 font-semibold">Rule</th>
+                      <th className="px-3 py-2 text-right font-semibold">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)]">
+                    {computedPreview.map((c) => (
+                      <tr key={c.name}>
+                        <td className="px-3 py-2 font-medium">{c.name}</td>
+                        <td className="px-3 py-2 text-[var(--color-muted)]">{c.ruleText}</td>
+                        <td
+                          className={`px-3 py-2 text-right font-semibold tabular-nums ${
+                            c.amount < 0 ? "text-[var(--color-danger)]" : ""
+                          }`}
+                        >
+                          {formatMoney(c.amount)}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--color-border)]">
-                      {computedPreview.map((c) => (
-                        <tr key={c.name}>
-                          <td className="px-3 py-2 font-medium">{c.name}</td>
-                          <td className="px-3 py-2 text-[var(--color-muted)]">{c.ruleText}</td>
-                          <td className={`px-3 py-2 text-right font-semibold tabular-nums ${c.amount < 0 ? "text-rose-600" : ""}`}>
-                            {formatMoney(c.amount)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-[var(--color-bg)] font-semibold divide-y divide-[var(--color-border)]">
-                      <tr>
-                        <td className="px-3 py-2" colSpan={2}>Gross Monthly Earnings</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{formatMoney(W)}</td>
-                      </tr>
-                      <tr className="text-rose-600">
-                        <td className="px-3 py-2" colSpan={2}>Employee Deductions (PF {pfEmpRate}% + PT)</td>
-                        <td className="px-3 py-2 text-right tabular-nums">-{formatMoney(totalDeductions)}</td>
-                      </tr>
-                      <tr className="text-[var(--color-accent)]">
-                        <td className="px-3 py-2" colSpan={2}>Employer Contribution (PF {pfErRate}%)</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{formatMoney(pfErAmt)}</td>
-                      </tr>
-                      <tr className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 font-bold text-sm">
-                        <td className="px-3 py-2.5" colSpan={2}>Estimated Net Take-Home Salary</td>
-                        <td className="px-3 py-2.5 text-right tabular-nums">{formatMoney(netTakeHome)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                  <tfoot className="divide-y divide-[var(--color-border)] bg-[var(--color-bg)] font-semibold">
+                    <tr>
+                      <td className="px-3 py-2" colSpan={2}>
+                        Gross monthly earnings
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{formatMoney(W)}</td>
+                    </tr>
+                    <tr className="text-[var(--color-danger)]">
+                      <td className="px-3 py-2" colSpan={2}>
+                        Employee deductions (PF {pfEmpRate}% + PT)
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">-{formatMoney(totalDeductions)}</td>
+                    </tr>
+                    <tr className="text-[var(--color-accent)]">
+                      <td className="px-3 py-2" colSpan={2}>
+                        Employer contribution (PF {pfErRate}%)
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{formatMoney(pfErAmt)}</td>
+                    </tr>
+                    <tr className="bg-emerald-500/10 text-emerald-800 dark:text-emerald-200">
+                      <td className="px-3 py-2.5" colSpan={2}>
+                        Estimated net take-home
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">{formatMoney(netTakeHome)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             ) : null}
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

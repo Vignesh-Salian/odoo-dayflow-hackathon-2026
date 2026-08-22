@@ -123,7 +123,7 @@ export function AttendancePage() {
           {isAdminHr ? (
             <Link
               to="/attendance/all"
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+              className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
             >
               Company day view
             </Link>
@@ -132,7 +132,7 @@ export function AttendancePage() {
             type="button"
             onClick={() => checkInMut.mutate()}
             disabled={checkInMut.isPending || !!todayRecord?.checkIn}
-            className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            className="df-btn df-btn-primary disabled:opacity-50"
           >
             Check In
           </button>
@@ -140,14 +140,14 @@ export function AttendancePage() {
             type="button"
             onClick={() => checkOutMut.mutate()}
             disabled={checkOutMut.isPending || !todayRecord?.checkIn || !!todayRecord?.checkOut}
-            className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm disabled:opacity-50"
+            className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] disabled:opacity-50"
           >
             Check Out
           </button>
           <button
             type="button"
             onClick={() => setRegOpen((v) => !v)}
-            className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+            className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
           >
             Regularize
           </button>

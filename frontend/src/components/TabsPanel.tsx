@@ -22,7 +22,7 @@ export function TabsPanel({ tabs, activeId, onChange }: TabsPanelProps) {
   return (
     <div>
       <div
-        className="flex flex-wrap gap-1 border-b border-[var(--color-border)]"
+        className="inline-flex flex-wrap gap-1 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)]/70 p-1"
         role="tablist"
         aria-label="Sections"
       >
@@ -34,17 +34,14 @@ export function TabsPanel({ tabs, activeId, onChange }: TabsPanelProps) {
               type="button"
               role="tab"
               aria-selected={selected}
-              className={`relative px-4 py-2.5 text-sm font-medium transition ${
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                 selected
-                  ? "text-[var(--color-tab)]"
+                  ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
                   : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
               }`}
               onClick={() => onChange(tab.id)}
             >
               {tab.label}
-              {selected ? (
-                <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--color-tab)]" />
-              ) : null}
             </button>
           );
         })}

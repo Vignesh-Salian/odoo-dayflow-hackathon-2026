@@ -112,6 +112,17 @@ employeesRouter.get(
 employeesRouter.post(
   "/:id/certifications",
   validate(employeeIdParamSchema, "params"),
+  upload.single("file"),
+  (req, _res, next) => {
+    // Multer fields arrive as strings; normalize empty year before zod.
+    if (req.body?.year === "" || req.body?.year === undefined) {
+      req.body = { ...req.body, year: null };
+    }
+    if (req.file) {
+      req.body = { ...req.body, fileUrl: `/uploads/${req.file.filename}` };
+    }
+    next();
+  },
   validate(certificationBodySchema),
   employeesController.addCertification,
 );

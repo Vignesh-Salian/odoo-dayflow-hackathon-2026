@@ -3,11 +3,12 @@
  */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Banknote, FileText } from "lucide-react";
 import { payrollApi } from "../../api/payroll.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { PaginationControls } from "../../components/PaginationControls.tsx";
-import { LoadingState } from "../../components/LoadingState.tsx";
 import { EmptyState } from "../../components/EmptyState.tsx";
+import { Skeleton } from "../../components/Skeleton.tsx";
 
 const PAGE_SIZE = 10;
 
@@ -54,10 +55,19 @@ export function PayrollPage() {
 
   return (
     <section className="space-y-6">
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Payroll</h1>
+      <div>
+        <div className="mb-1 flex items-center gap-2 text-[var(--color-accent)]">
+          <Banknote className="h-5 w-5" strokeWidth={1.75} />
+          <span className="text-xs font-semibold uppercase tracking-wider">Compensation</span>
+        </div>
+        <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
+          Payroll
+        </h1>
+      </div>
+
       {canGenerate ? (
-        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <label className="text-sm">
+        <div className="df-card flex flex-wrap items-end gap-3 p-5">
+          <label className="text-sm text-[var(--color-muted)]">
             Month
             <input
               type="number"
@@ -65,43 +75,64 @@ export function PayrollPage() {
               max={12}
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="mt-1 block w-24 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5"
+              className="df-input mt-1 block w-24 py-2"
             />
           </label>
-          <label className="text-sm">
+          <label className="text-sm text-[var(--color-muted)]">
             Year
             <input
               type="number"
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="mt-1 block w-28 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5"
+              className="df-input mt-1 block w-28 py-2"
             />
           </label>
           <button
             type="button"
             onClick={() => generate.mutate()}
-            className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white"
+            disabled={generate.isPending}
+            className="df-btn df-btn-primary disabled:opacity-60"
           >
             {generate.isPending ? "Generating…" : "Generate payslips"}
           </button>
         </div>
       ) : null}
-      <div className="space-y-2">
+
+      <div className="space-y-3">
         <h2 className="font-semibold">My payslips</h2>
-        {mine.isLoading ? <LoadingState label="Loading payslips…" /> : null}
+        {mine.isLoading ? (
+          <div className="space-y-2" role="status" aria-label="Loading payslips">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="df-card flex items-center justify-between p-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        ) : null}
         {!mine.isLoading && slips.length === 0 ? (
-          <EmptyState title="No payslips yet" description="Generate payroll for a month to see slips here." />
+          <EmptyState
+            title="No payslips yet"
+            description="Generate payroll for a month to see slips here."
+          />
         ) : null}
         <ul className="space-y-2">
           {slips.map((s) => (
             <li
               key={s.id}
-              className="flex items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+              className="df-card flex items-center justify-between px-4 py-3 text-sm transition hover:border-[var(--color-accent)]/30"
             >
-              <span>
-                {s.month}/{s.year} — net {String(s.netPay)}
+              <span className="font-medium">
+                {s.month}/{s.year}
+                <span className="ml-2 text-[var(--color-muted)]">
+                  net {String(s.netPay)}
+                </span>
               </span>
-              <a className="text-[var(--color-accent)]" href={payrollApi.pdfUrl(s.id)}>
+              <a
+                className="inline-flex items-center gap-1.5 font-medium text-[var(--color-accent)] hover:underline"
+                href={payrollApi.pdfUrl(s.id)}
+              >
+                <FileText className="h-4 w-4" strokeWidth={1.75} />
                 PDF
               </a>
             </li>

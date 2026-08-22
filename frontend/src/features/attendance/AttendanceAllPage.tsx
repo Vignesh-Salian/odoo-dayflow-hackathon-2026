@@ -10,7 +10,6 @@ import { getApiError } from "../../api/client.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { StatusDot } from "./StatusDot.tsx";
 import { PaginationControls } from "../../components/PaginationControls.tsx";
-import { LoadingState } from "../../components/LoadingState.tsx";
 
 const PAGE_SIZE = 20;
 
@@ -73,7 +72,7 @@ export function AttendanceAllPage() {
         </div>
         <Link
           to="/attendance"
-          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+          className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
         >
           My monthly view
         </Link>
@@ -86,7 +85,7 @@ export function AttendanceAllPage() {
             setPage(1);
             setDate((d) => shiftDate(d, -1));
           }}
-          className="rounded-md border border-[var(--color-border)] px-2 py-1 text-sm"
+          className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5"
         >
           ←
         </button>
@@ -97,7 +96,7 @@ export function AttendanceAllPage() {
             setPage(1);
             setDate(e.target.value);
           }}
-          className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm"
+          className="df-input w-auto py-2 text-sm"
         />
         <button
           type="button"
@@ -105,7 +104,7 @@ export function AttendanceAllPage() {
             setPage(1);
             setDate((d) => shiftDate(d, 1));
           }}
-          className="rounded-md border border-[var(--color-border)] px-2 py-1 text-sm"
+          className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5"
         >
           →
         </button>
@@ -115,7 +114,7 @@ export function AttendanceAllPage() {
             setPage(1);
             setDate(todayKey());
           }}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted)]"
+          className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)]"
         >
           Today
         </button>
@@ -132,48 +131,65 @@ export function AttendanceAllPage() {
             placeholder="Search name or login ID"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-56 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm"
+            className="df-input w-56 py-2 text-sm"
           />
-          <button
-            type="submit"
-            className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white"
-          >
+          <button type="submit" className="df-btn df-btn-primary">
             Search
           </button>
         </form>
       </div>
 
       {summary ? (
-        <div className="flex flex-wrap gap-4 text-sm text-[var(--color-muted)]">
-          <span>
-            On this page — In office:{" "}
-            <strong className="text-[var(--color-text)]">{summary.inOffice}</strong>
-          </span>
-          <span>
-            On leave: <strong className="text-[var(--color-text)]">{summary.onLeave}</strong>
-          </span>
-          <span>
-            Absent: <strong className="text-[var(--color-text)]">{summary.absent}</strong>
-          </span>
-          <span>
-            Company total: <strong className="text-[var(--color-text)]">{summary.total}</strong>
-          </span>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="df-card px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-[var(--color-muted)]">In office</p>
+            <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">
+              {summary.inOffice}
+            </p>
+          </div>
+          <div className="df-card px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-[var(--color-muted)]">On leave</p>
+            <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">
+              {summary.onLeave}
+            </p>
+          </div>
+          <div className="df-card px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Absent</p>
+            <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">
+              {summary.absent}
+            </p>
+          </div>
+          <div className="df-card px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-[var(--color-muted)]">Company total</p>
+            <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">
+              {summary.total}
+            </p>
+          </div>
         </div>
       ) : null}
 
       {isLoading ? (
-        <LoadingState label="Loading day view…" />
+        <div className="df-card space-y-3 p-4" role="status" aria-label="Loading day view">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="skeleton h-4 w-32" />
+              <div className="skeleton h-4 w-20" />
+              <div className="skeleton h-4 w-20" />
+              <div className="skeleton h-4 flex-1" />
+            </div>
+          ))}
+        </div>
       ) : error ? (
-        <p className="text-[var(--color-danger)]">{getApiError(error).message}</p>
+        <p className="df-card p-4 text-sm text-[var(--color-danger)]">{getApiError(error).message}</p>
       ) : (
         <div className={`space-y-4 ${isFetching ? "opacity-70" : ""}`}>
-          <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
+          <div className="df-card overflow-x-auto">
             <table className="w-full min-w-[44rem] text-left text-sm">
-              <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
+              <thead className="bg-[var(--color-surface-2)]/80 text-[var(--color-muted)]">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Emp</th>
-                  <th className="px-3 py-2 font-medium">Check In</th>
-                  <th className="px-3 py-2 font-medium">Check Out</th>
+                  <th className="px-4 py-3 font-medium">Emp</th>
+                  <th className="px-4 py-3 font-medium">Check In</th>
+                  <th className="px-4 py-3 font-medium">Check Out</th>
                   <th className="px-3 py-2 font-medium">Work Hours</th>
                   <th className="px-3 py-2 font-medium">Extra hours</th>
                   <th className="px-3 py-2 font-medium">Presence</th>

@@ -61,7 +61,7 @@ export function Calendar({ year, events, holidays = [], onDayClick }: CalendarPr
         return (
           <div
             key={name}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+            className="df-card p-3"
           >
             <p className="mb-2 text-center text-sm font-semibold text-[var(--color-tab)]">{name}</p>
             <div className="mb-1 grid grid-cols-7 gap-0.5 text-center text-[10px] text-[var(--color-muted)]">

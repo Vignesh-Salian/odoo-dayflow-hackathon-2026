@@ -37,12 +37,15 @@ export function LoginPage() {
       subtitle="Use your login ID or email to continue."
       onSubmit={onSubmit}
       footer={
-        <>
+        <p className="text-center">
           New company?{" "}
-          <Link className="text-[var(--color-accent)] hover:underline" to="/signup">
-            Create company account
+          <Link
+            className="ml-1 inline-flex cursor-pointer items-center rounded-lg bg-[var(--color-accent)] px-2.5 py-1 font-semibold !text-white shadow-sm transition hover:bg-[var(--color-accent-hover)] hover:!text-white"
+            to="/signup"
+          >
+            Create a company
           </Link>
-        </>
+        </p>
       }
     >
       <FormField
@@ -68,7 +71,7 @@ export function LoginPage() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-[var(--color-accent)] py-2.5 font-medium text-white transition hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
+        className="df-btn df-btn-primary w-full py-2.5 disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

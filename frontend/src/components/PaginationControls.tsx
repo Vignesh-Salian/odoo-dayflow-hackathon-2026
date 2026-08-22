@@ -1,6 +1,8 @@
 /**
  * Shared pagination footer for list pages.
  */
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 type PaginationControlsProps = {
   page: number;
   limit: number;
@@ -27,8 +29,9 @@ export function PaginationControls({ page, limit, total, onPageChange }: Paginat
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 disabled:opacity-40"
+          className="df-btn inline-flex items-center gap-1 border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 disabled:opacity-40"
         >
+          <ChevronLeft className="h-4 w-4" />
           Previous
         </button>
         <span className="tabular-nums">
@@ -38,9 +41,10 @@ export function PaginationControls({ page, limit, total, onPageChange }: Paginat
           type="button"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 disabled:opacity-40"
+          className="df-btn inline-flex items-center gap-1 border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 disabled:opacity-40"
         >
           Next
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
     </div>

@@ -80,7 +80,7 @@ export function SecurityPasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="df-btn df-btn-primary disabled:opacity-50"
       >
         {pending ? "Saving…" : "Update password"}
       </button>

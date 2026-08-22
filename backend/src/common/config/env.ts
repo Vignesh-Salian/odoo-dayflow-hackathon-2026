@@ -18,6 +18,16 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional().default(""),
   SMTP_PASS: z.string().optional().default(""),
   UPLOAD_DIR: z.string().default("uploads"),
+  /**
+   * Optional demo override for "today" (YYYY-MM-DD, UTC).
+   * Empty / unset = real calendar date. Use a weekday when demos fall on weekends.
+   */
+  DEMO_TODAY: z
+    .string()
+    .default("")
+    .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), {
+      message: "DEMO_TODAY must be YYYY-MM-DD or empty",
+    }),
 });
 
 export const env = envSchema.parse(process.env);

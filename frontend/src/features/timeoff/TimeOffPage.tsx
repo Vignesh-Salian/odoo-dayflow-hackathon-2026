@@ -5,10 +5,17 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import {
+  CalendarDays,
+  ClipboardList,
+  Plus,
+  PartyPopper,
+} from "lucide-react";
 import { Calendar } from "../../components/Calendar.tsx";
 import { FormField, SelectField, TextAreaField } from "../../components/FormField.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
+import { SkeletonStats } from "../../components/Skeleton.tsx";
 import { getApiError } from "../../api/client.ts";
 import { timeoffApi, type LeaveType } from "../../api/timeoff.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
@@ -28,6 +35,16 @@ function countLeaveDays(startDate: string, endDate: string, holidayDates: Set<st
     cur.setDate(cur.getDate() + 1);
   }
   return days;
+}
+
+function statusBadge(status: string) {
+  if (status === "APPROVED") {
+    return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
+  }
+  if (status === "REJECTED") {
+    return "bg-rose-500/15 text-rose-700 dark:text-rose-400";
+  }
+  return "bg-sky-500/15 text-sky-700 dark:text-sky-400";
 }
 
 export function TimeOffPage() {
@@ -129,12 +146,19 @@ export function TimeOffPage() {
 
   const isManager = user?.role === "ADMIN" || user?.role === "HR";
   const holidays = [...(holidaysQ.data ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+  const recentRequests = [...(requestsQ.data ?? [])]
+    .sort((a, b) => b.startDate.localeCompare(a.startDate))
+    .slice(0, 6);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
+          <div className="mb-1 flex items-center gap-2 text-[var(--color-accent)]">
+            <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
+            <span className="text-xs font-semibold uppercase tracking-wider">Leave</span>
+          </div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
             Time Off
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -145,8 +169,9 @@ export function TimeOffPage() {
           {isManager ? (
             <Link
               to="/timeoff/manage"
-              className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-muted)] transition hover:border-[var(--color-tab)] hover:text-[var(--color-tab)]"
+              className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
             >
+              <ClipboardList className="h-4 w-4" strokeWidth={1.75} />
               Manage requests
             </Link>
           ) : null}
@@ -156,68 +181,147 @@ export function TimeOffPage() {
               resetForm();
               setModalOpen(true);
             }}
-            className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-hover)]"
+            className="df-btn df-btn-primary"
           >
-            NEW
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            New request
           </button>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {(allocationsQ.data ?? []).map((a) => (
-          <StatCard
-            key={a.id}
-            label={a.leaveType.name}
-            value={`${a.remainingDays} Days Available`}
-            hint={`${a.usedDays} used of ${a.allocatedDays}`}
-            accent={a.leaveType.color ?? undefined}
-          />
-        ))}
-        {allocationsQ.isLoading ? (
-          <p className="text-sm text-[var(--color-muted)]">Loading balances…</p>
-        ) : null}
-      </div>
+      {allocationsQ.isLoading ? (
+        <SkeletonStats count={3} />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {(allocationsQ.data ?? []).map((a) => {
+            const usedPct =
+              a.allocatedDays > 0
+                ? Math.min(100, Math.round((a.usedDays / a.allocatedDays) * 100))
+                : 0;
+            return (
+              <StatCard
+                key={a.id}
+                label={a.leaveType.name}
+                value={`${a.remainingDays} days`}
+                hint={`${a.usedDays} used of ${a.allocatedDays} · ${usedPct}% used`}
+                accent={a.leaveType.color ?? undefined}
+                icon={<CalendarDays className="h-4 w-4" strokeWidth={1.75} />}
+              />
+            );
+          })}
+          {(allocationsQ.data ?? []).length === 0 ? (
+            <div className="df-card col-span-full p-6 text-center text-sm text-[var(--color-muted)]">
+              No leave balances allocated for {year} yet.
+            </div>
+          ) : null}
+        </div>
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
-        <Calendar
-          year={year}
-          events={events}
-          holidays={(holidaysQ.data ?? []).map((h) => ({ date: h.date, name: h.name }))}
-        />
-        <aside className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <h2 className="mb-3 text-sm font-semibold text-[var(--color-tab)]">Public holidays</h2>
-          {holidays.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">No holidays listed for {year}.</p>
-          ) : (
-            <ul className="max-h-[28rem] space-y-2 overflow-y-auto text-sm">
-              {holidays.map((h) => (
-                <li key={h.id ?? h.date + h.name} className="flex justify-between gap-2">
-                  <span className="text-[var(--color-muted)]">
-                    {new Date(`${h.date.slice(0, 10)}T12:00:00`).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <span className="text-right">{h.name}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-muted)]">
-            Green = approved · Blue = pending · Red = refused
-          </p>
+      <div className="grid gap-4 xl:grid-cols-[1fr_18rem]">
+        <div className="space-y-4">
+          <div className="df-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <p className="text-sm font-medium">Year calendar</p>
+            <div className="flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Approved
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-sky-500" /> Pending
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Refused
+              </span>
+            </div>
+          </div>
+          <Calendar
+            year={year}
+            events={events}
+            holidays={(holidaysQ.data ?? []).map((h) => ({ date: h.date, name: h.name }))}
+          />
+        </div>
+
+        <aside className="space-y-4">
+          <div className="df-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+                <PartyPopper className="h-4 w-4" strokeWidth={1.75} />
+              </span>
+              <h2 className="text-sm font-semibold">Public holidays</h2>
+            </div>
+            {holidaysQ.isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }, (_, i) => (
+                  <div key={i} className="skeleton h-8 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : holidays.length === 0 ? (
+              <p className="text-sm text-[var(--color-muted)]">No holidays listed for {year}.</p>
+            ) : (
+              <ul className="max-h-[18rem] space-y-1.5 overflow-y-auto">
+                {holidays.map((h) => (
+                  <li
+                    key={h.id ?? h.date + h.name}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-[var(--color-surface-2)]/70 px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium tabular-nums text-[var(--color-muted)]">
+                      {new Date(`${h.date.slice(0, 10)}T12:00:00`).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="truncate text-right">{h.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="df-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+                <ClipboardList className="h-4 w-4" strokeWidth={1.75} />
+              </span>
+              <h2 className="text-sm font-semibold">Recent requests</h2>
+            </div>
+            {requestsQ.isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div key={i} className="skeleton h-14 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : recentRequests.length === 0 ? (
+              <p className="text-sm text-[var(--color-muted)]">No leave requests yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentRequests.map((r) => (
+                  <li
+                    key={r.id}
+                    className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]/40 px-3 py-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium">{r.leaveType?.name ?? "Leave"}</p>
+                      <span className={`df-badge ${statusBadge(r.status)}`}>{r.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {r.startDate.slice(0, 10)} → {r.endDate.slice(0, 10)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </aside>
       </div>
 
       <Modal
         open={modalOpen}
-        title="Time off Type Request"
+        title="Request time off"
         onClose={() => setModalOpen(false)}
         footer={
           <>
             <button
               type="button"
-              className="rounded-md px-3 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-surface-2)]"
+              className="df-btn df-btn-ghost"
               onClick={() => setModalOpen(false)}
             >
               Discard
@@ -230,7 +334,7 @@ export function TimeOffPage() {
                 setFields({});
                 createMut.mutate();
               }}
-              className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="df-btn df-btn-primary disabled:opacity-50"
             >
               {createMut.isPending ? "Submitting…" : "Submit"}
             </button>
@@ -239,7 +343,7 @@ export function TimeOffPage() {
       >
         <div className="space-y-4">
           {formError ? (
-            <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 px-3 py-2 text-sm text-[var(--color-danger)]">
+            <p className="rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 px-3 py-2 text-sm text-[var(--color-danger)]">
               {formError}
             </p>
           ) : null}
@@ -250,7 +354,7 @@ export function TimeOffPage() {
             </strong>
           </p>
           <SelectField
-            label="Time off Type"
+            label="Time off type"
             name="leaveTypeId"
             value={leaveTypeId}
             error={fields.leaveTypeId}
@@ -282,11 +386,9 @@ export function TimeOffPage() {
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
-          <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm">
+          <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2.5 text-sm">
             Allocation:{" "}
-            <strong className="tabular-nums">
-              {previewDays.toFixed(2)} Days
-            </strong>
+            <strong className="tabular-nums">{previewDays.toFixed(2)} Days</strong>
             <span className="text-[var(--color-muted)]"> (weekdays, excluding holidays)</span>
           </p>
           <TextAreaField
@@ -299,14 +401,14 @@ export function TimeOffPage() {
           />
           {selectedType?.requiresAttachment ? (
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--color-muted)]">
-                Attachment (For sick leave certificate)
+              <span className="text-sm font-medium text-[var(--color-muted)]">
+                Attachment (sick leave certificate)
               </span>
               <input
                 type="file"
                 name="attachment"
                 accept=".pdf,.png,.jpg,.jpeg"
-                className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-1.5"
+                className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-1.5"
                 onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
               />
               {fields.attachment ? (

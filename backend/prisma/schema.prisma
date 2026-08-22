@@ -198,14 +198,16 @@ model Employee {
 }
 
 model BankDetails {
-  id            String @id @default(uuid()) @db.Uuid
-  employeeId    String @unique @map("employee_id") @db.Uuid
-  accountNumber String @map("account_number")
-  bankName      String @map("bank_name")
-  ifscCode      String @map("ifsc_code")
-  panNo         String @map("pan_no")
-  uanNo         String @map("uan_no")
-  empCode       String @map("emp_code")
+  id                String @id @default(uuid()) @db.Uuid
+  employeeId        String @unique @map("employee_id") @db.Uuid
+  accountHolderName String? @map("account_holder_name")
+  accountNumber     String @map("account_number")
+  bankName          String @map("bank_name")
+  branchName        String? @map("branch_name")
+  ifscCode          String @map("ifsc_code")
+  panNo             String @map("pan_no")
+  uanNo             String @map("uan_no")
+  empCode           String @map("emp_code")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -240,6 +242,7 @@ model Certification {
   name       String
   issuedBy   String? @map("issued_by")
   year       Int?
+  fileUrl    String? @map("file_url")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 

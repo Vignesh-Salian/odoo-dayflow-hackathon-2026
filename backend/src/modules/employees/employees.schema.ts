@@ -65,8 +65,10 @@ export const patchMeSchema = z.object({
 });
 
 export const bankDetailsSchema = z.object({
+  accountHolderName: z.string().optional().nullable(),
   accountNumber: z.string().min(1, "Account number is required"),
   bankName: z.string().min(1, "Bank name is required"),
+  branchName: z.string().optional().nullable(),
   ifscCode: z.string().min(1, "IFSC is required"),
   panNo: z.string().min(1, "PAN is required"),
   uanNo: z.string().min(1, "UAN is required"),
@@ -81,6 +83,7 @@ export const certificationBodySchema = z.object({
   name: z.string().min(1, "Certification name is required"),
   issuedBy: z.string().optional().nullable(),
   year: z.coerce.number().int().min(1950).max(2100).optional().nullable(),
+  fileUrl: z.string().optional().nullable(),
 });
 
 export const documentBodySchema = z.object({

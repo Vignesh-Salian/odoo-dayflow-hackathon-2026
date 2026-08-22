@@ -1,44 +1,132 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "DM Sans", "Segoe UI", sans-serif;
   --font-display: "Syne", "DM Sans", sans-serif;
-  --color-bg: #111111;
-  --color-surface: #1a1a1a;
-  --color-surface-2: #222222;
-  --color-border: #2e2e2e;
-  --color-text: #f4f4f5;
-  --color-muted: #a1a1aa;
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
-  --color-tab: #3b82f6;
-  --color-warning: #eab308;
+
+  --color-bg: var(--df-bg);
+  --color-surface: var(--df-surface);
+  --color-surface-2: var(--df-surface-2);
+  --color-border: var(--df-border);
+  --color-text: var(--df-text);
+  --color-muted: var(--df-muted);
+  --color-accent: var(--df-accent);
+  --color-accent-hover: var(--df-accent-hover);
+  --color-accent-soft: var(--df-accent-soft);
+  --color-danger: var(--df-danger);
+  --color-success: var(--df-success);
+  --color-tab: var(--df-tab);
+  --color-warning: var(--df-warning);
+  --color-sidebar: var(--df-sidebar);
+  --color-sidebar-text: var(--df-sidebar-text);
+  --color-sidebar-muted: var(--df-sidebar-muted);
+  --color-sidebar-active: var(--df-sidebar-active);
+  --color-sidebar-hover: var(--df-sidebar-hover);
+  --color-sidebar-border: var(--df-sidebar-border);
+  --shadow-card: var(--df-shadow-card);
+  --radius-card: 1.125rem;
 }
 
+/* Light — soft lavender / sky atmosphere (reference) */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --df-bg: #eef0f8;
+  --df-surface: #ffffff;
+  --df-surface-2: #f4f6fc;
+  --df-border: #e2e6f0;
+  --df-text: #1a1d2e;
+  --df-muted: #6b7289;
+  --df-accent: #5b6cff;
+  --df-accent-hover: #4a5aef;
+  --df-accent-soft: rgba(91, 108, 255, 0.12);
+  --df-danger: #ef4444;
+  --df-success: #22c55e;
+  --df-tab: #5b6cff;
+  --df-warning: #eab308;
+  --df-sidebar: #ffffff;
+  --df-sidebar-text: #1a1d2e;
+  --df-sidebar-muted: #6b7289;
+  --df-sidebar-active: #5b6cff;
+  --df-sidebar-hover: rgba(26, 29, 46, 0.06);
+  --df-sidebar-border: #e2e6f0;
+  --df-shadow-card: 0 4px 24px rgba(22, 24, 42, 0.06), 0 1px 2px rgba(22, 24, 42, 0.04);
+  --df-bg-glow-1: rgba(139, 150, 255, 0.28);
+  --df-bg-glow-2: rgba(120, 180, 255, 0.18);
+
   font-family: var(--font-sans);
-  background-color: var(--color-bg);
-  color: var(--color-text);
+  background-color: var(--df-bg);
+  color: var(--df-text);
+}
+
+/* Dark — deep navy charcoal (reference) */
+.dark {
+  color-scheme: dark;
+  --df-bg: #0d0d17;
+  --df-surface: #161622;
+  --df-surface-2: #1e1e2e;
+  --df-border: #2a2a3c;
+  --df-text: #f4f4f5;
+  --df-muted: #9ca3af;
+  --df-accent: #8b7cff;
+  --df-accent-hover: #7a6af0;
+  --df-accent-soft: rgba(139, 124, 255, 0.16);
+  --df-danger: #f87171;
+  --df-success: #34d399;
+  --df-tab: #8b7cff;
+  --df-warning: #fbbf24;
+  --df-sidebar: #12121c;
+  --df-sidebar-text: #f4f4f5;
+  --df-sidebar-muted: #8b8fa3;
+  --df-sidebar-active: #8b7cff;
+  --df-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --df-sidebar-border: #2a2a3c;
+  --df-shadow-card: 0 4px 28px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.03);
+  --df-bg-glow-1: rgba(139, 124, 255, 0.14);
+  --df-bg-glow-2: rgba(59, 130, 246, 0.1);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(139, 92, 246, 0.18), transparent 55%),
-    radial-gradient(900px 500px at 90% 0%, rgba(59, 130, 246, 0.12), transparent 50%),
-    var(--color-bg);
-  color: var(--color-text);
+    radial-gradient(1200px 600px at 8% -12%, var(--df-bg-glow-1), transparent 55%),
+    radial-gradient(900px 500px at 92% 0%, var(--df-bg-glow-2), transparent 50%),
+    var(--df-bg);
+  color: var(--df-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  cursor: pointer;
 }
 
+button,
+[role="button"],
+summary,
+label[for],
+select,
+input[type="file"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+.df-btn {
+  cursor: pointer;
+}
+
+button:disabled,
+.df-btn:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* Shared motion */
 @keyframes modal-in {
   from {
     opacity: 0;
@@ -48,4 +136,131 @@ a {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 280ms ease-out both;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--df-surface-2);
+  border-radius: 0.5rem;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--df-text) 6%, transparent),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+/* Utility helpers used across pages */
+.df-card {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--df-border);
+  background: var(--df-surface);
+  box-shadow: var(--df-shadow-card);
+}
+
+.df-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    transform 120ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+
+.df-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.df-btn-primary {
+  background: var(--df-accent);
+  color: #fff !important;
+}
+
+.df-btn-primary:hover:not(:disabled) {
+  background: var(--df-accent-hover);
+}
+
+.df-btn-ghost {
+  background: transparent;
+  color: var(--df-muted);
+}
+
+.df-btn-ghost:hover:not(:disabled) {
+  background: var(--df-surface-2);
+  color: var(--df-text);
+}
+
+.df-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--df-border);
+  background: var(--df-surface);
+  padding: 0.625rem 0.875rem;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.df-input:focus {
+  border-color: var(--df-accent);
+  box-shadow: 0 0 0 3px var(--df-accent-soft);
+}
+
+.df-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }

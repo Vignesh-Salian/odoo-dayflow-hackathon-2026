@@ -4,6 +4,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
 import { employeesApi } from "../../api/employees.ts";
 import { payrollApi } from "../../api/payroll.ts";
 import { getApiError } from "../../api/client.ts";
@@ -19,17 +20,19 @@ import {
   ResumeTab,
   type ProfileEmp,
 } from "./EmployeeProfileShared.tsx";
+import { AssignManagerPanel } from "./AssignManagerPanel.tsx";
 
 export function EmployeeProfilePage() {
   const { id = "" } = useParams();
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  /** PDF: Salary Info when viewing another employee is Admin-only. */
+  const isHrOrAdmin = user?.role === "ADMIN" || user?.role === "HR";
   const canSeeSalary = isAdmin;
   const [tab, setTab] = useState("resume");
+  const profileKey = ["employee", id] as const;
 
   const profile = useQuery({
-    queryKey: ["employee", id],
+    queryKey: profileKey,
     queryFn: async () => (await employeesApi.get(id)).data.data as ProfileEmp,
     enabled: !!id,
   });
@@ -50,7 +53,11 @@ export function EmployeeProfilePage() {
 
   if (profile.isLoading) return <LoadingState label="Loading profile…" />;
   if (profile.error) {
-    return <p className="text-[var(--color-danger)]">{getApiError(profile.error).message}</p>;
+    return (
+      <p className="df-card p-4 text-sm text-[var(--color-danger)]">
+        {getApiError(profile.error).message}
+      </p>
+    );
   }
   if (!profile.data) {
     return <EmptyState title="Employee not found" />;
@@ -58,9 +65,10 @@ export function EmployeeProfilePage() {
 
   const emp = profile.data;
   const hasSalary = !!salary.data;
+  const qk = [...profileKey];
 
   const salaryContent = (
-    <div>
+    <div className="df-card space-y-4 p-5">
       {salary.isLoading ? <LoadingState label="Loading salary…" /> : null}
       {salary.isError ? (
         <p className="text-sm text-[var(--color-danger)]">{getApiError(salary.error).message}</p>
@@ -76,7 +84,7 @@ export function EmployeeProfilePage() {
         <>
           <SalaryStructurePanel data={salary.data} readOnly />
           {isAdmin ? (
-            <details className="mt-4">
+            <details className="mt-2">
               <summary className="cursor-pointer text-sm text-[var(--color-accent)]">
                 Replace salary structure
               </summary>
@@ -89,26 +97,45 @@ export function EmployeeProfilePage() {
   );
 
   const tabs = [
-    { id: "resume", label: "Resume", content: <ResumeTab emp={emp} /> },
-    { id: "private", label: "Private Info", content: <PrivateInfoTab emp={emp} /> },
-    ...(canSeeSalary
-      ? [{ id: "salary", label: "Salary Info", content: salaryContent }]
-      : []),
+    {
+      id: "resume",
+      label: "Resume",
+      content: <ResumeTab emp={emp} canEdit={isHrOrAdmin} queryKey={qk} />,
+    },
+    {
+      id: "private",
+      label: "Private Info",
+      content: <PrivateInfoTab emp={emp} canEdit={isHrOrAdmin} queryKey={qk} />,
+    },
+    ...(canSeeSalary ? [{ id: "salary", label: "Salary Info", content: salaryContent }] : []),
   ];
 
   const activeId = tabs.some((t) => t.id === tab) ? tab : tabs[0]!.id;
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6">
       <ProfileHeader
         emp={emp}
         companyName={user?.company?.name}
+        canEditAvatar={isHrOrAdmin}
+        queryKey={qk}
         trailing={
-          <Link to="/employees" className="text-sm text-[var(--color-accent)] hover:underline">
-            ← Directory
+          <Link
+            to="/employees"
+            className="df-btn inline-flex items-center gap-1.5 border border-[var(--color-border)] bg-[var(--color-surface)] text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Directory
           </Link>
         }
       />
+      {isHrOrAdmin ? (
+        <AssignManagerPanel
+          employeeId={emp.id}
+          currentManagerId={emp.managerId ?? emp.manager?.id ?? null}
+          queryKey={qk}
+        />
+      ) : null}
       <TabsPanel tabs={tabs} activeId={activeId} onChange={setTab} />
     </section>
   );

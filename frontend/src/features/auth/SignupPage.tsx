@@ -60,42 +60,46 @@ export function SignupPage() {
   return (
     <AuthShell
       title="Create your company"
-      subtitle="Public sign-up creates the company and first admin only. Upload a logo for the navbar and payslips."
+      subtitle="Sets up the company and first admin. Logo is optional."
       onSubmit={onSubmit}
+      wide
       footer={
         <>
           Already have an account?{" "}
-          <Link className="text-[var(--color-accent)] hover:underline" to="/login">
+          <Link className="font-semibold text-[var(--color-accent)] hover:underline" to="/login">
             Sign in
           </Link>
         </>
       }
     >
-      <FormField
-        label="Company name"
-        name="companyName"
-        value={form.companyName}
-        onChange={(e) => set("companyName", e.target.value)}
-        error={fields.companyName}
-        required
-      />
-      <label className="block space-y-1.5">
-        <span className="text-sm text-[var(--color-muted)]">Upload logo (optional)</span>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField
+          label="Company name"
+          name="companyName"
+          value={form.companyName}
+          onChange={(e) => set("companyName", e.target.value)}
+          error={fields.companyName}
+          required
+        />
+        <FormField
+          label="Country"
+          name="country"
+          value={form.country}
+          onChange={(e) => set("country", e.target.value)}
+          error={fields.country}
+          placeholder="India"
+        />
+      </div>
+      <label className="block space-y-1.5 sm:col-span-2">
+        <span className="text-sm font-medium text-[var(--color-muted)]">Company logo (optional)</span>
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp,image/svg+xml"
-          className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-1.5"
+          className="w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-1.5"
           onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
         />
       </label>
-      <FormField
-        label="Country"
-        name="country"
-        value={form.country}
-        onChange={(e) => set("country", e.target.value)}
-        error={fields.country}
-      />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <FormField
           label="First name"
           name="adminFirstName"
@@ -113,47 +117,51 @@ export function SignupPage() {
           required
         />
       </div>
-      <FormField
-        label="Email"
-        name="email"
-        type="email"
-        value={form.email}
-        onChange={(e) => set("email", e.target.value)}
-        error={fields.email}
-        required
-      />
-      <FormField
-        label="Phone"
-        name="phone"
-        type="tel"
-        value={form.phone}
-        onChange={(e) => set("phone", e.target.value)}
-        error={fields.phone}
-        placeholder="+91-98765-43210"
-      />
-      <FormField
-        label="Password"
-        name="password"
-        type="password"
-        value={form.password}
-        onChange={(e) => set("password", e.target.value)}
-        error={fields.password}
-        required
-      />
-      <FormField
-        label="Confirm password"
-        name="confirmPassword"
-        type="password"
-        value={form.confirmPassword}
-        onChange={(e) => set("confirmPassword", e.target.value)}
-        error={fields.confirmPassword}
-        required
-      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField
+          label="Email"
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={(e) => set("email", e.target.value)}
+          error={fields.email}
+          required
+        />
+        <FormField
+          label="Phone"
+          name="phone"
+          type="tel"
+          value={form.phone}
+          onChange={(e) => set("phone", e.target.value)}
+          error={fields.phone}
+          placeholder="+91-98765-43210"
+        />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField
+          label="Password"
+          name="password"
+          type="password"
+          value={form.password}
+          onChange={(e) => set("password", e.target.value)}
+          error={fields.password}
+          required
+        />
+        <FormField
+          label="Confirm password"
+          name="confirmPassword"
+          type="password"
+          value={form.confirmPassword}
+          onChange={(e) => set("confirmPassword", e.target.value)}
+          error={fields.confirmPassword}
+          required
+        />
+      </div>
       {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-[var(--color-accent)] py-2.5 font-medium text-white transition hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
+        className="df-btn df-btn-primary w-full py-2.5 disabled:opacity-60"
       >
         {pending ? "Creating…" : "Sign Up"}
       </button>

@@ -62,6 +62,30 @@ async function main() {
   const existing = await prisma.company.findFirst({ where: { code: "OI" } });
   if (existing) {
     console.info("Removing previous OI demo company…");
+    const userIds = (
+      await prisma.user.findMany({ where: { companyId: existing.id }, select: { id: true } })
+    ).map((u) => u.id);
+    const empIds = (
+      await prisma.employee.findMany({
+        where: { user: { companyId: existing.id } },
+        select: { id: true },
+      })
+    ).map((e) => e.id);
+    const leaveTypeIds = (
+      await prisma.leaveType.findMany({ where: { companyId: existing.id }, select: { id: true } })
+    ).map((lt) => lt.id);
+
+    if (userIds.length > 0) {
+      await prisma.auditLog.deleteMany({ where: { actorUserId: { in: userIds } } });
+      await prisma.document.deleteMany({ where: { uploadedByUserId: { in: userIds } } });
+    }
+    if (empIds.length > 0) {
+      await prisma.leaveRequest.deleteMany({ where: { employeeId: { in: empIds } } });
+      await prisma.attendanceRegularization.deleteMany({ where: { employeeId: { in: empIds } } });
+    }
+    if (leaveTypeIds.length > 0) {
+      await prisma.leaveRequest.deleteMany({ where: { leaveTypeId: { in: leaveTypeIds } } });
+    }
     await prisma.company.delete({ where: { id: existing.id } });
   }
 
@@ -473,6 +497,9 @@ async function main() {
             residingAddress: `${spec.firstName} Residency, Indiranagar, Bengaluru 560038`,
             personalEmail: `${spec.firstName.toLowerCase()}.${spec.lastName.toLowerCase()}@personal-mail.demo`,
             phone: `+91-98${String(10000000 + created.length).slice(0, 8)}`,
+            avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(
+              `${spec.firstName}-${spec.lastName}`,
+            )}`,
           },
         });
 
@@ -480,8 +507,10 @@ async function main() {
         await tx.bankDetails.create({
           data: {
             employeeId: employee.id,
+            accountHolderName: `${spec.firstName} ${spec.lastName}`,
             accountNumber: spec.bankAccount,
             bankName: "HDFC Bank",
+            branchName: "MG Road, Bengaluru",
             ifscCode: "HDFC0001234",
             panNo: spec.panNo,
             uanNo: `1009876543${String(20 + created.length).padStart(2, "0")}`,
@@ -573,32 +602,53 @@ async function main() {
   const vikram = created.find((c) => c.email.startsWith("vikram"))!;
   const arjun = created.find((c) => c.email.startsWith("arjun"))!;
   const dev = created.find((c) => c.email.startsWith("dev"))!;
+  const neha = created.find((c) => c.email.startsWith("neha"))!;
+  const ananya = created.find((c) => c.email.startsWith("ananya"))!;
+  const karan = created.find((c) => c.email.startsWith("karan"))!;
+  const meera = created.find((c) => c.email.startsWith("meera"))!;
+  const sneha = created.find((c) => c.email.startsWith("sneha"))!;
+  const roshni = created.find((c) => c.email.startsWith("roshni"))!;
 
-  // Management Hierarchy
-  await prisma.employee.update({
-    where: { id: john.employeeId },
-    data: { managerId: priya.employeeId },
-  });
-  await prisma.employee.update({
-    where: { id: rahul.employeeId },
-    data: { managerId: priya.employeeId },
-  });
-  await prisma.employee.update({
-    where: { id: priya.employeeId },
-    data: { managerId: admin.employeeId },
-  });
-  await prisma.employee.update({
-    where: { id: vikram.employeeId },
-    data: { managerId: admin.employeeId },
-  });
-  await prisma.employee.update({
-    where: { id: arjun.employeeId },
-    data: { managerId: admin.employeeId },
-  });
-  await prisma.employee.update({
-    where: { id: dev.employeeId },
-    data: { managerId: admin.employeeId },
-  });
+  /**
+   * Org hierarchy (visible on Employees → Org chart):
+   *
+   * Ada (Admin / VP People)
+   * ├── Hari (HR Ops)
+   * │   ├── Meera
+   * │   └── Sneha
+   * ├── Priya (Engineering lead)
+   * │   ├── John
+   * │   ├── Rahul
+   * │   ├── Neha
+   * │   └── Ananya
+   * ├── Vikram (Sales lead)
+   * │   ├── Karan
+   * │   └── Roshni
+   * ├── Dev (Engineering)
+   * └── Arjun (Finance)
+   */
+  const hierarchy: { id: string; managerId: string }[] = [
+    { id: hari.employeeId, managerId: admin.employeeId },
+    { id: meera.employeeId, managerId: hari.employeeId },
+    { id: sneha.employeeId, managerId: hari.employeeId },
+    { id: priya.employeeId, managerId: admin.employeeId },
+    { id: john.employeeId, managerId: priya.employeeId },
+    { id: rahul.employeeId, managerId: priya.employeeId },
+    { id: neha.employeeId, managerId: priya.employeeId },
+    { id: ananya.employeeId, managerId: priya.employeeId },
+    { id: vikram.employeeId, managerId: admin.employeeId },
+    { id: karan.employeeId, managerId: vikram.employeeId },
+    { id: roshni.employeeId, managerId: vikram.employeeId },
+    { id: dev.employeeId, managerId: admin.employeeId },
+    { id: arjun.employeeId, managerId: admin.employeeId },
+  ];
+
+  for (const edge of hierarchy) {
+    await prisma.employee.update({
+      where: { id: edge.id },
+      data: { managerId: edge.managerId },
+    });
+  }
 
   // Attendance for last 35 days for all employees
   const today = new Date();
@@ -757,67 +807,108 @@ async function main() {
     },
   });
 
-  // Comprehensive Payslips for Multiple Employees (Current & Previous month)
-  const payMonth = MONTH === 0 ? 12 : MONTH;
-  const payYear = MONTH === 0 ? YEAR - 1 : YEAR;
-  const periodStart = utcDate(payYear, payMonth - 1, 1);
-  const periodEnd = utcDate(payYear, payMonth, 0);
-  const totalWorkingDays = 22;
+  // Payslips for ALL employees (current period + previous) with real PDF files
+  const { renderPayslipPdf } = await import("../src/modules/payroll/payslipPdf.js");
 
-  const payslipEmployees = [john, priya, rahul, vikram, dev, arjun];
+  const payPeriods = [
+    {
+      month: MONTH === 0 ? 12 : MONTH,
+      year: MONTH === 0 ? YEAR - 1 : YEAR,
+    },
+    {
+      month: MONTH <= 1 ? (MONTH === 0 ? 11 : 12) : MONTH - 1,
+      year: MONTH <= 1 ? YEAR - 1 : YEAR,
+    },
+  ];
 
-  for (const emp of payslipEmployees) {
-    const lopDays = emp.employeeId === john.employeeId ? 1 : 0;
-    const payableDays = totalWorkingDays - lopDays;
-    const ratio = payableDays / totalWorkingDays;
-    const components = computeComponents(emp.wage, defaultComponentTemplate());
-    const earnings = components.map((c) => ({
-      name: c.name,
-      type: PayslipLineType.EARNING as const,
-      amount: round2(c.computedAmount * ratio),
-    }));
-    const basic = (components.find((c) => c.name === "Basic")?.computedAmount ?? emp.wage * 0.5) * ratio;
-    const deductions = computeDeductions({
-      basicAmount: basic,
-      pfEmployeeRate: 12,
-      professionalTax: 200,
-    });
-    const gross = round2(earnings.reduce((s, e) => s + e.amount, 0));
-    const net = round2(gross - deductions.total);
+  console.info("Generating payslips + PDFs…");
+  for (const period of payPeriods) {
+    const periodStart = utcDate(period.year, period.month - 1, 1);
+    const periodEnd = utcDate(period.year, period.month, 0);
+    const totalWorkingDays = 22;
 
-    await prisma.payslip.create({
-      data: {
-        employeeId: emp.employeeId,
-        month: payMonth,
-        year: payYear,
-        periodStart,
-        periodEnd,
-        totalWorkingDays,
-        payableDays,
-        lopDays,
+    for (const emp of created) {
+      const lopDays = emp.employeeId === john.employeeId && period === payPeriods[0] ? 1 : 0;
+      const payableDays = totalWorkingDays - lopDays;
+      const ratio = payableDays / totalWorkingDays;
+      const components = computeComponents(emp.wage, defaultComponentTemplate());
+      const earnings = components.map((c) => ({
+        name: c.name,
+        type: PayslipLineType.EARNING as const,
+        amount: round2(c.computedAmount * ratio),
+      }));
+      const basic =
+        (components.find((c) => c.name === "Basic")?.computedAmount ?? emp.wage * 0.5) * ratio;
+      const deductions = computeDeductions({
+        basicAmount: basic,
+        pfEmployeeRate: 12,
+        professionalTax: 200,
+      });
+      const gross = round2(earnings.reduce((s, e) => s + e.amount, 0));
+      const net = round2(gross - deductions.total);
+      const lines = [
+        ...earnings,
+        {
+          name: "PF (Employee)",
+          type: PayslipLineType.DEDUCTION as const,
+          amount: deductions.pfEmployee,
+        },
+        {
+          name: "Professional Tax",
+          type: PayslipLineType.DEDUCTION as const,
+          amount: deductions.professionalTax,
+        },
+      ];
+
+      const payslip = await prisma.payslip.create({
+        data: {
+          employeeId: emp.employeeId,
+          month: period.month,
+          year: period.year,
+          periodStart,
+          periodEnd,
+          totalWorkingDays,
+          payableDays,
+          lopDays,
+          grossEarnings: gross,
+          totalDeductions: deductions.total,
+          netPay: net,
+          status:
+            period === payPeriods[0] && emp.employeeId === john.employeeId
+              ? PayslipStatus.PAID
+              : PayslipStatus.GENERATED,
+          generatedAt: new Date(),
+          lines: {
+            create: lines,
+          },
+        },
+      });
+
+      const pdfUrl = await renderPayslipPdf(payslip.id, {
+        companyName: company.name,
+        logoPath: null,
+        employeeName: `${emp.firstName} ${emp.lastName}`,
+        loginId: emp.loginId,
+        month: period.month,
+        year: period.year,
         grossEarnings: gross,
         totalDeductions: deductions.total,
         netPay: net,
-        status: emp.employeeId === john.employeeId ? PayslipStatus.PAID : PayslipStatus.GENERATED,
-        generatedAt: new Date(),
-        lines: {
-          create: [
-            ...earnings,
-            {
-              name: "PF (Employee)",
-              type: PayslipLineType.DEDUCTION,
-              amount: deductions.pfEmployee,
-            },
-            {
-              name: "Professional Tax",
-              type: PayslipLineType.DEDUCTION,
-              amount: deductions.professionalTax,
-            },
-          ],
-        },
-      },
-    });
+        payableDays,
+        lopDays,
+        totalWorkingDays,
+        lines,
+      });
+
+      await prisma.payslip.update({
+        where: { id: payslip.id },
+        data: { pdfUrl },
+      });
+    }
   }
+
+  const payMonth = payPeriods[0]!.month;
+  const payYear = payPeriods[0]!.year;
 
   // Notifications
   await prisma.notification.createMany({
@@ -884,7 +975,7 @@ async function main() {
         action: "PAYROLL_RUN_COMPLETED",
         entityType: "payslip_batch",
         entityId: company.id,
-        newValue: { month: payMonth, year: payYear, count: payslipEmployees.length },
+        newValue: { month: payMonth, year: payYear, count: created.length * 2 },
         ipAddress: "127.0.0.1",
       },
     ],

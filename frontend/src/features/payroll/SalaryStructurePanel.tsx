@@ -4,6 +4,7 @@
 import { formatMoney } from "../../utils/format.ts";
 import { EmptyState } from "../../components/EmptyState.tsx";
 import { LoadingState } from "../../components/LoadingState.tsx";
+import { StatCard } from "../../components/StatCard.tsx";
 
 export type SalaryComponent = {
   id: string;
@@ -115,74 +116,72 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
         </p>
       )}
 
-      {/* Top: Overview Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
-          <p className="text-xs font-medium text-[var(--color-muted)]">Monthly Wage</p>
-          <p className="text-xl font-bold tabular-nums mt-0.5">
-            {formatMoney(monthlyWage)} <span className="text-xs font-normal text-[var(--color-muted)]">/ Month</span>
-          </p>
-        </div>
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
-          <p className="text-xs font-medium text-[var(--color-muted)]">Yearly Wage</p>
-          <p className="text-xl font-bold tabular-nums mt-0.5">
-            {formatMoney(yearlyWage)} <span className="text-xs font-normal text-[var(--color-muted)]">/ Year</span>
-          </p>
-        </div>
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
-          <p className="text-xs font-medium text-[var(--color-muted)]">Working Days / Week</p>
-          <p className="text-xl font-bold tabular-nums mt-0.5">{data.workingDaysPerWeek} Days</p>
-        </div>
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
-          <p className="text-xs font-medium text-[var(--color-muted)]">Break Time</p>
-          <p className="text-xl font-bold tabular-nums mt-0.5">
-            {data.breakTimeHours != null && data.breakTimeHours !== "" ? String(data.breakTimeHours) : "—"}{" "}
-            <span className="text-xs font-normal text-[var(--color-muted)]">/ hrs</span>
-          </p>
-        </div>
+        <StatCard label="Monthly wage" value={formatMoney(monthlyWage)} hint="/ month" />
+        <StatCard label="Yearly wage" value={formatMoney(yearlyWage)} hint="/ year" />
+        <StatCard label="Working days / week" value={`${data.workingDaysPerWeek} days`} />
+        <StatCard
+          label="Break time"
+          value={
+            data.breakTimeHours != null && data.breakTimeHours !== ""
+              ? String(data.breakTimeHours)
+              : "—"
+          }
+          hint="/ hrs"
+        />
       </div>
 
-      {/* Salary Summary Card */}
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-[var(--color-tab)]">Salary Summary Breakdown</h3>
+      <div className="df-card space-y-3 p-4">
+        <h3 className="text-sm font-semibold text-[var(--color-text)]">Salary summary</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-muted)] font-medium">Gross Earnings</p>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <p className="text-xs font-medium text-[var(--color-muted)]">Gross earnings</p>
             <p className="text-lg font-bold tabular-nums">{formatMoney(monthlyWage)}</p>
-            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">Basic + Allowances</p>
+            <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">Basic + allowances</p>
           </div>
-          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-muted)] font-medium">Employee Deductions</p>
-            <p className="text-lg font-bold tabular-nums text-rose-600">-{formatMoney(totalDeductions)}</p>
-            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">PF ({pfEmpRate}%) + PT ({formatMoney(pt)})</p>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <p className="text-xs font-medium text-[var(--color-muted)]">Employee deductions</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--color-danger)]">
+              -{formatMoney(totalDeductions)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
+              PF ({pfEmpRate}%) + PT ({formatMoney(pt)})
+            </p>
           </div>
-          <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 p-3 border border-emerald-200 dark:border-emerald-800">
-            <p className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Net Take-Home Salary</p>
-            <p className="text-xl font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">{formatMoney(netSalary)}</p>
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Gross - Employee Deductions</p>
+          <div className="rounded-xl border border-emerald-300/50 bg-emerald-500/10 p-3 dark:border-emerald-800">
+            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              Net take-home
+            </p>
+            <p className="text-xl font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">
+              {formatMoney(netSalary)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+              Gross − employee deductions
+            </p>
           </div>
-          <div className="rounded-md bg-[var(--color-bg)] p-3 border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-muted)] font-medium">Employer Contributions</p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-accent)]">{formatMoney(pfEmployerAmt)}</p>
-            <p className="text-[11px] text-[var(--color-muted)] mt-0.5">Employer PF ({pfErRate}%)</p>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <p className="text-xs font-medium text-[var(--color-muted)]">Employer contributions</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--color-accent)]">
+              {formatMoney(pfEmployerAmt)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">Employer PF ({pfErRate}%)</p>
           </div>
         </div>
       </div>
 
-      {/* Two columns: Earnings Components | PF + Tax Deductions */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--color-tab)]">Earnings Components</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text)]">Earnings components</h3>
           {components.map((c) => {
             const amount = num(c.computedAmount);
             return (
               <div
                 key={c.id}
-                className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-medium">{c.name}</p>
-                  <p className="tabular-nums text-sm">
+                  <p className="text-sm tabular-nums">
                     <span className="font-semibold">{formatMoney(amount)}</span>
                     <span className="text-[var(--color-muted)]"> / month</span>
                     <span className="ml-2 text-[var(--color-muted)]">
@@ -194,50 +193,51 @@ export function SalaryStructurePanel({ data, isLoading, readOnly = true }: Props
               </div>
             );
           })}
-          <div className="flex justify-between items-center border-t border-[var(--color-border)] pt-2 text-sm font-semibold">
-            <span>Total Gross Components:</span>
+          <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-2 text-sm font-semibold">
+            <span>Total gross components</span>
             <span className="tabular-nums">{formatMoney(monthlyWage)}</span>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-[var(--color-tab)]">
-              Provident Fund (PF) Contribution
+            <h3 className="mb-3 text-sm font-semibold text-[var(--color-text)]">
+              Provident Fund (PF)
             </h3>
-            <div className="space-y-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <div className="df-card space-y-2 p-3">
               <div className="flex justify-between gap-2 text-sm">
                 <span className="font-medium">Employee PF ({pfEmpRate}%)</span>
                 <span className="tabular-nums">
-                  <strong className="text-rose-600">-{formatMoney(pfEmployeeAmt)}</strong>
+                  <strong className="text-[var(--color-danger)]">-{formatMoney(pfEmployeeAmt)}</strong>
                   <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
-              <div className="flex justify-between gap-2 text-sm pt-1 border-t border-[var(--color-border)]">
+              <div className="flex justify-between gap-2 border-t border-[var(--color-border)] pt-1 text-sm">
                 <span className="font-medium">Employer PF ({pfErRate}%)</span>
                 <span className="tabular-nums">
                   <strong className="text-[var(--color-accent)]">{formatMoney(pfEmployerAmt)}</strong>
                   <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
-              <p className="text-xs text-[var(--color-muted)] mt-1">
-                PF is calculated based on Basic salary ({formatMoney(basicAmt)}). Employer PF is an additional company contribution and does NOT reduce employee net salary.
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                PF is calculated on Basic ({formatMoney(basicAmt)}). Employer PF is company-paid and
+                does not reduce employee net salary.
               </p>
             </div>
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-[var(--color-tab)]">Tax Deductions</h3>
-            <div className="space-y-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--color-text)]">Tax deductions</h3>
+            <div className="df-card space-y-2 p-3">
               <div className="flex justify-between gap-2 text-sm">
                 <span className="font-medium">Professional Tax (PT)</span>
                 <span className="tabular-nums">
-                  <strong className="text-rose-600">-{formatMoney(pt)}</strong>
+                  <strong className="text-[var(--color-danger)]">-{formatMoney(pt)}</strong>
                   <span className="text-[var(--color-muted)]"> / month</span>
                 </span>
               </div>
               <p className="text-xs text-[var(--color-muted)]">
-                Professional Tax deducted directly from Gross Salary.
+                Professional Tax deducted directly from gross salary.
               </p>
             </div>
           </div>

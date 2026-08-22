@@ -101,8 +101,10 @@ export const employeesRepository = {
   upsertBank(
     employeeId: string,
     data: {
+      accountHolderName?: string | null;
       accountNumber: string;
       bankName: string;
+      branchName?: string | null;
       ifscCode: string;
       panNo: string;
       uanNo: string;
@@ -134,7 +136,12 @@ export const employeesRepository = {
 
   addCertification(
     employeeId: string,
-    data: { name: string; issuedBy?: string | null; year?: number | null },
+    data: {
+      name: string;
+      issuedBy?: string | null;
+      year?: number | null;
+      fileUrl?: string | null;
+    },
   ) {
     return prisma.certification.create({
       data: {
@@ -142,6 +149,7 @@ export const employeesRepository = {
         name: data.name,
         issuedBy: data.issuedBy ?? null,
         year: data.year ?? null,
+        fileUrl: data.fileUrl ?? null,
       },
     });
   },

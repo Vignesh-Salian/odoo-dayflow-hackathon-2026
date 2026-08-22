@@ -8,6 +8,7 @@ import {
   AttendanceStatus,
   Prisma,
 } from "@prisma/client";
+import { env } from "../../common/config/env.js";
 import { AppError } from "../../common/errors/AppError.js";
 import type { AuthUser } from "../../common/middleware/auth.js";
 import {
@@ -40,6 +41,8 @@ export function toDateKey(d: Date): string {
 }
 
 export function todayUtcDate(): Date {
+  const override = env.DEMO_TODAY?.trim();
+  if (override) return parseDateOnly(override);
   return parseDateOnly(toDateKey(new Date()));
 }
 

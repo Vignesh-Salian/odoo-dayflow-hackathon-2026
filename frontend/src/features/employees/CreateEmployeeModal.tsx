@@ -2,7 +2,7 @@
  * OWNER: Nidhish (Person B) — create employee modal with credentials reveal.
  */
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Modal } from "../../components/Modal.tsx";
 import { FormField, SelectField } from "../../components/FormField.tsx";
 import { employeesApi } from "../../api/employees.ts";
@@ -32,12 +32,29 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
     phone: "",
     jobPosition: "",
     workLocation: "",
+    managerId: "",
   });
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [createdEmployeeId, setCreatedEmployeeId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const managersQ = useQuery({
+    queryKey: ["employees", "manager-picker"],
+    queryFn: async () => {
+      const res = await employeesApi.list({ page: 1, limit: 100 });
+      return res.data.data as {
+        items: Array<{
+          id: string;
+          firstName: string;
+          lastName: string;
+          jobPosition?: string | null;
+        }>;
+      };
+    },
+    enabled: open,
+  });
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -53,6 +70,7 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
       phone: "",
       jobPosition: "",
       workLocation: "",
+      managerId: "",
     });
     setFields({});
     setError(null);
@@ -72,6 +90,7 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
         phone: form.phone.trim() || undefined,
         jobPosition: form.jobPosition.trim() || undefined,
         workLocation: form.workLocation.trim() || undefined,
+        managerId: form.managerId || null,
       });
       return res.data.data as {
         employee: { id: string };
@@ -111,14 +130,14 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
           <>
             <button
               type="button"
-              className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm"
+              className="df-btn border border-[var(--color-border)]"
               onClick={() => void copyCreds()}
             >
               {copied ? "Copied" : "Copy login details"}
             </button>
             <button
               type="button"
-              className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white"
+              className="df-btn df-btn-primary"
               onClick={() => {
                 const id = createdEmployeeId;
                 reset();
@@ -133,7 +152,7 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
           <>
             <button
               type="button"
-              className="rounded-md px-3 py-2 text-sm text-[var(--color-muted)]"
+              className="df-btn df-btn-ghost"
               onClick={() => {
                 reset();
                 onClose();
@@ -149,7 +168,7 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
                 setFields({});
                 createMut.mutate();
               }}
-              className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="df-btn df-btn-primary disabled:opacity-50"
             >
               {createMut.isPending ? "Creating…" : "Create employee"}
             </button>
@@ -162,7 +181,7 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
           <p className="text-sm text-[var(--color-muted)]">
             Share these once with the employee. They must change the password on first login.
           </p>
-          <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3 font-mono text-sm">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 font-mono text-sm">
             <p>
               <span className="text-[var(--color-muted)]">Login ID:</span> {credentials.loginId}
             </p>
@@ -186,8 +205,8 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
             />
             <FormField
               label="Last name"
-              name="lastName"
               value={form.lastName}
+              name="lastName"
               error={fields.lastName}
               onChange={(e) => set("lastName", e.target.value)}
               required
@@ -232,6 +251,21 @@ export function CreateEmployeeModal({ open, onClose, onCreated, onOpenProfile }:
             onChange={(e) => set("jobPosition", e.target.value)}
             placeholder="Software Engineer"
           />
+          <SelectField
+            label="Manager"
+            name="managerId"
+            value={form.managerId}
+            error={fields.managerId}
+            onChange={(e) => set("managerId", e.target.value)}
+          >
+            <option value="">No manager</option>
+            {(managersQ.data?.items ?? []).map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.firstName} {e.lastName}
+                {e.jobPosition ? ` — ${e.jobPosition}` : ""}
+              </option>
+            ))}
+          </SelectField>
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField
               label="Phone"

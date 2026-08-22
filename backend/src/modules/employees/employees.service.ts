@@ -11,6 +11,7 @@ import {
 } from "../../common/utils/security.js";
 import { generateLoginId } from "../auth/auth.service.js";
 import { authRepository } from "../auth/auth.repository.js";
+import { todayUtcDate } from "../attendance/attendance.service.js";
 import { employeesRepository } from "./employees.repository.js";
 import type {
   BankDetailsInput,
@@ -21,10 +22,6 @@ import type {
 } from "./employees.schema.js";
 
 type PresenceStatus = "present" | "on_leave" | "absent" | "unknown";
-
-function startOfUtcDay(d = new Date()): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
 
 function isHrOrAdmin(role: Role) {
   return role === Role.ADMIN || role === Role.HR;
@@ -72,7 +69,7 @@ function toPublic(
 }
 
 async function resolvePresence(employeeIds: string[]): Promise<Map<string, PresenceStatus>> {
-  const today = startOfUtcDay();
+  const today = todayUtcDate();
   const map = new Map<string, PresenceStatus>();
   if (employeeIds.length === 0) return map;
 
@@ -254,6 +251,7 @@ export const employeesService = {
         avatarUrl: e.avatarUrl,
         jobPosition: e.jobPosition,
         workLocation: e.workLocation,
+        managerId: e.managerId,
         department: e.department,
         user: e.user,
         presenceStatus: presence.get(e.id) ?? "unknown",
@@ -443,7 +441,12 @@ export const employeesService = {
   async addCertification(
     actor: AuthUser,
     employeeId: string,
-    data: { name: string; issuedBy?: string | null; year?: number | null },
+    data: {
+      name: string;
+      issuedBy?: string | null;
+      year?: number | null;
+      fileUrl?: string | null;
+    },
   ) {
     const emp = await employeesRepository.findByIdInCompany(employeeId, actor.companyId);
     if (!emp) throw new AppError(404, "NOT_FOUND", "Employee not found");

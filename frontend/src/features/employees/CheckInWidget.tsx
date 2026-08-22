@@ -3,6 +3,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LogIn, LogOut, Timer } from "lucide-react";
 import { attendanceApi } from "../../api/attendance.ts";
 import { getApiError } from "../../api/client.ts";
 
@@ -69,32 +70,39 @@ export function CheckInWidget() {
   });
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <div className="df-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-[var(--color-muted)]">Today’s attendance</p>
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+            <Timer className="h-4.5 w-4.5" strokeWidth={1.75} />
+          </span>
+          <p className="text-sm font-semibold">Today&apos;s attendance</p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => checkInMut.mutate()}
             disabled={checkInMut.isPending || !!todayRecord?.checkIn}
-            className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            className="df-btn df-btn-primary disabled:opacity-50"
           >
-            Check In →
+            <LogIn className="h-4 w-4" strokeWidth={1.75} />
+            Check In
           </button>
-          <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 font-mono text-sm tabular-nums">
+          <span className="inline-flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 font-mono text-sm tabular-nums">
             {elapsedLabel}
           </span>
           <button
             type="button"
             onClick={() => checkOutMut.mutate()}
             disabled={checkOutMut.isPending || !checkedIn || checkedOut}
-            className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm disabled:opacity-50"
+            className="df-btn border border-[var(--color-border)] bg-[var(--color-surface)] disabled:opacity-50"
           >
-            Check Out →
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />
+            Check Out
           </button>
         </div>
       </div>
-      {banner ? <p className="mt-2 text-sm text-[var(--color-danger)]">{banner}</p> : null}
+      {banner ? <p className="mt-3 text-sm text-[var(--color-danger)]">{banner}</p> : null}
     </div>
   );
 }

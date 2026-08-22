@@ -1,8 +1,9 @@
 ﻿/**
  * OWNER: Nidhish (Person B) — Admin sets wage & structure parameters.
+ * Preview mirrors company salary policy (same rules the backend applies on save).
  */
-import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormField } from "../../components/FormField.tsx";
 import { payrollApi } from "../../api/payroll.ts";
 import { getApiError } from "../../api/client.ts";
@@ -13,28 +14,58 @@ type Props = {
   mode?: "create" | "replace";
 };
 
+type PolicyComponent = {
+  name: string;
+  computationType: string;
+  value: number | string | null;
+  sequence: number;
+};
+
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-/** Client preview mirroring backend defaultComponentTemplate + computeComponents. */
-function previewComponents(monthlyWage: number) {
+/** Client preview mirroring backend computeComponents + company policy. */
+function previewFromPolicy(monthlyWage: number, components: PolicyComponent[]) {
   const W = round2(monthlyWage);
-  const basic = round2(W * 0.5);
-  const hra = round2(basic * 0.5);
-  const standard = 4167;
-  const perf = round2(basic * 0.08333);
-  const lta = round2(basic * 0.08333);
-  const used = round2(basic + hra + standard + perf + lta);
-  const fixed = round2(W - used);
-  return [
-    { name: "Basic", amount: basic, rule: "50% of wage" },
-    { name: "House Rent Allowance", amount: hra, rule: "50% of basic" },
-    { name: "Standard Allowance", amount: standard, rule: "Fixed ₹4,167" },
-    { name: "Performance Bonus", amount: perf, rule: "8.333% of basic" },
-    { name: "Leave Travel Allowance", amount: lta, rule: "8.333% of basic" },
-    { name: "Fixed Allowance", amount: fixed, rule: "Balance (wage - others)" },
-  ];
+  if (W <= 0 || components.length === 0) return [];
+
+  const ordered = [...components].sort((a, b) => a.sequence - b.sequence);
+  const nonBalance = ordered.filter((c) => c.computationType !== "BALANCE");
+  const balanceComp = ordered.find((c) => c.computationType === "BALANCE");
+
+  let basic = 0;
+  let running = 0;
+  const rows: { name: string; amount: number; rule: string }[] = [];
+
+  for (const c of nonBalance) {
+    const val = Number(c.value ?? 0);
+    let amount = 0;
+    let rule = "";
+    if (c.computationType === "PERCENT_OF_WAGE") {
+      amount = round2(W * (val / 100));
+      rule = `${val}% of wage`;
+    } else if (c.computationType === "PERCENT_OF_BASIC") {
+      amount = round2(basic * (val / 100));
+      rule = `${val}% of basic`;
+    } else if (c.computationType === "FIXED_AMOUNT" || c.computationType === "FIXED") {
+      amount = round2(val);
+      rule = `Fixed ${formatMoney(val)}`;
+    }
+    if (c.name.toLowerCase() === "basic") basic = amount;
+    running = round2(running + amount);
+    rows.push({ name: c.name, amount, rule });
+  }
+
+  if (balanceComp) {
+    rows.push({
+      name: balanceComp.name,
+      amount: round2(W - running),
+      rule: "Balance (wage − others)",
+    });
+  }
+
+  return rows;
 }
 
 export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
@@ -45,17 +76,34 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
   const [pfEmployee, setPfEmployee] = useState("12");
   const [pfEmployer, setPfEmployer] = useState("12");
   const [professionalTax, setProfessionalTax] = useState("200");
+  const [defaultsApplied, setDefaultsApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const policyQ = useQuery({
+    queryKey: ["company-salary-policy"],
+    queryFn: async () => (await payrollApi.getCompanySalaryPolicy()).data.data,
+  });
+
+  useEffect(() => {
+    if (!policyQ.data || defaultsApplied) return;
+    setPfEmployee(String(policyQ.data.pfEmployeeRate ?? 12));
+    setPfEmployer(String(policyQ.data.pfEmployerRate ?? 12));
+    setProfessionalTax(String(policyQ.data.professionalTax ?? 200));
+    setDefaultsApplied(true);
+  }, [policyQ.data, defaultsApplied]);
 
   const wageNum = Number(monthlyWage) || 0;
   const pfEmpRate = Number(pfEmployee) || 0;
   const pfErRate = Number(pfEmployer) || 0;
   const ptAmt = Number(professionalTax) || 0;
 
-  const preview = useMemo(() => (wageNum > 0 ? previewComponents(wageNum) : []), [wageNum]);
-  const exceeds = preview.some((c) => c.name === "Fixed Allowance" && c.amount < 0);
+  const preview = useMemo(() => {
+    const components = (policyQ.data?.components ?? []) as PolicyComponent[];
+    return wageNum > 0 ? previewFromPolicy(wageNum, components) : [];
+  }, [wageNum, policyQ.data?.components]);
+  const exceeds = preview.some((c) => c.amount < 0);
 
-  const basicAmt = preview.find((c) => c.name === "Basic")?.amount ?? 0;
+  const basicAmt = preview.find((c) => c.name.toLowerCase() === "basic")?.amount ?? 0;
   const pfEmpAmt = round2(basicAmt * (pfEmpRate / 100));
   const pfErAmt = round2(basicAmt * (pfErRate / 100));
   const totalDeductions = round2(pfEmpAmt + ptAmt);
@@ -80,15 +128,15 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
   });
 
   return (
-    <div className="mt-4 space-y-4 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] p-4">
-      <p className="text-sm text-[var(--color-muted)] font-medium">
+    <div className="df-card mt-4 space-y-4 border-dashed p-4">
+      <p className="text-sm font-medium text-[var(--color-muted)]">
         {mode === "replace"
-          ? "Update monthly wage and parameters — components & net salary recalculate automatically."
-          : "Set fixed monthly wage. Dayflow builds Basic, HRA, and Allowances automatically."}
+          ? "Update monthly wage and parameters — components & net salary recalculate from company policy."
+          : "Set fixed monthly wage. Components follow the company salary policy automatically."}
       </p>
-      {error ? <p className="text-sm text-[var(--color-danger)] font-medium">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-[var(--color-danger)]">{error}</p> : null}
       {exceeds ? (
-        <p className="text-sm text-[var(--color-danger)] font-medium">
+        <p className="text-sm font-medium text-[var(--color-danger)]">
           Non-balance components exceed this wage — raise the wage to proceed.
         </p>
       ) : null}
@@ -146,69 +194,64 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
         />
       </div>
 
-      {/* Real-time Salary Breakdown Preview */}
       {preview.length > 0 ? (
-        <div className="space-y-3">
-          <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--color-surface)] text-[var(--color-muted)]">
-                <tr>
-                  <th className="px-3 py-2 font-medium">Component</th>
-                  <th className="px-3 py-2 font-medium">Rule</th>
-                  <th className="px-3 py-2 font-medium text-right">Monthly Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.map((c) => (
-                  <tr key={c.name} className="border-t border-[var(--color-border)]">
-                    <td className="px-3 py-1.5 font-medium">{c.name}</td>
-                    <td className="px-3 py-1.5 text-[var(--color-muted)]">{c.rule}</td>
-                    <td
-                      className={`px-3 py-1.5 text-right tabular-nums ${
-                        c.amount < 0 ? "text-[var(--color-danger)] font-bold" : ""
-                      }`}
-                    >
-                      {formatMoney(c.amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-[var(--color-border)] bg-[var(--color-surface)] font-semibold">
-                  <td className="px-3 py-2" colSpan={2}>
-                    Gross Monthly Wage
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {formatMoney(wageNum)}
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-[var(--color-bg)] text-[var(--color-muted)]">
+              <tr>
+                <th className="px-3 py-2 font-medium">Component</th>
+                <th className="px-3 py-2 font-medium">Rule</th>
+                <th className="px-3 py-2 text-right font-medium">Monthly amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map((c) => (
+                <tr key={c.name} className="border-t border-[var(--color-border)]">
+                  <td className="px-3 py-1.5 font-medium">{c.name}</td>
+                  <td className="px-3 py-1.5 text-[var(--color-muted)]">{c.rule}</td>
+                  <td
+                    className={`px-3 py-1.5 text-right tabular-nums ${
+                      c.amount < 0 ? "font-bold text-[var(--color-danger)]" : ""
+                    }`}
+                  >
+                    {formatMoney(c.amount)}
                   </td>
                 </tr>
-                <tr className="border-t border-[var(--color-border)] text-xs text-rose-600">
-                  <td className="px-3 py-1.5" colSpan={2}>
-                    Employee Deductions (PF {pfEmpRate}% + PT {formatMoney(ptAmt)})
-                  </td>
-                  <td className="px-3 py-1.5 text-right tabular-nums font-semibold">
-                    -{formatMoney(totalDeductions)}
-                  </td>
-                </tr>
-                <tr className="border-t border-[var(--color-border)] text-xs text-[var(--color-accent)]">
-                  <td className="px-3 py-1.5" colSpan={2}>
-                    Employer Contribution (PF {pfErRate}% - Company Paid)
-                  </td>
-                  <td className="px-3 py-1.5 text-right tabular-nums font-semibold">
-                    {formatMoney(pfErAmt)}
-                  </td>
-                </tr>
-                <tr className="border-t-2 border-[var(--color-border)] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold">
-                  <td className="px-3 py-2 text-base" colSpan={2}>
-                    Estimated Net Take-Home Salary
-                  </td>
-                  <td className="px-3 py-2 text-right text-base tabular-nums">
-                    {formatMoney(netSalary)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-[var(--color-border)] bg-[var(--color-bg)] font-semibold">
+                <td className="px-3 py-2" colSpan={2}>
+                  Gross monthly wage
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums">{formatMoney(wageNum)}</td>
+              </tr>
+              <tr className="border-t border-[var(--color-border)] text-xs text-[var(--color-danger)]">
+                <td className="px-3 py-1.5" colSpan={2}>
+                  Employee deductions (PF {pfEmpRate}% + PT {formatMoney(ptAmt)})
+                </td>
+                <td className="px-3 py-1.5 text-right font-semibold tabular-nums">
+                  -{formatMoney(totalDeductions)}
+                </td>
+              </tr>
+              <tr className="border-t border-[var(--color-border)] text-xs text-[var(--color-accent)]">
+                <td className="px-3 py-1.5" colSpan={2}>
+                  Employer contribution (PF {pfErRate}% — company paid)
+                </td>
+                <td className="px-3 py-1.5 text-right font-semibold tabular-nums">
+                  {formatMoney(pfErAmt)}
+                </td>
+              </tr>
+              <tr className="border-t-2 border-[var(--color-border)] bg-emerald-500/10 font-bold text-emerald-800 dark:text-emerald-300">
+                <td className="px-3 py-2 text-base" colSpan={2}>
+                  Estimated net take-home
+                </td>
+                <td className="px-3 py-2 text-right text-base tabular-nums">
+                  {formatMoney(netSalary)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       ) : null}
 
@@ -216,9 +259,13 @@ export function SetSalaryForm({ employeeId, mode = "create" }: Props) {
         type="button"
         disabled={saveMut.isPending || !monthlyWage || exceeds || wageNum <= 0}
         onClick={() => saveMut.mutate()}
-        className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
+        className="df-btn df-btn-primary disabled:opacity-50"
       >
-        {saveMut.isPending ? "Saving Salary Structure…" : mode === "replace" ? "Update Salary Structure" : "Save Salary Structure"}
+        {saveMut.isPending
+          ? "Saving salary structure…"
+          : mode === "replace"
+            ? "Update salary structure"
+            : "Save salary structure"}
       </button>
     </div>
   );
