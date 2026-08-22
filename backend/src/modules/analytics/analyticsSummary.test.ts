@@ -1,31 +1,11 @@
 /**
  * OWNER: Vignesh (Person C) — Phase 7
- * Analytics aggregate shape smoke test.
+ *
+ * PLACEHOLDER on `main`. Copy the full file from `reference/copy-from-here`:
+ *   git show reference/copy-from-here:backend/src/modules/analytics/analyticsSummary.test.ts > backend/src/modules/analytics/analyticsSummary.test.ts
  */
-import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-export function buildDashboardSummary(input: {
-  headcount: number;
-  presentToday: number;
-  pendingApprovals: number;
-  monthlyPayrollCost: number;
-}) {
-  return {
-    ...input,
-    attendancePct:
-      input.headcount === 0 ? 0 : Math.round((input.presentToday / input.headcount) * 1000) / 10,
-  };
-}
-
-describe("analytics dashboard summary", () => {
-  it("computes attendance percentage", () => {
-    const s = buildDashboardSummary({
-      headcount: 10,
-      presentToday: 8,
-      pendingApprovals: 2,
-      monthlyPayrollCost: 500000,
-    });
-    assert.equal(s.attendancePct, 80);
-  });
+describe("analytics dashboard summary — PLACEHOLDER", () => {
+  it("TODO: copy implementation from reference/copy-from-here", { todo: true }, () => {});
 });
